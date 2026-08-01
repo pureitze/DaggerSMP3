@@ -59,7 +59,6 @@ public class DaggersPlugin extends JavaPlugin {
             sender.sendMessage("Only players can run this command.");
             return true;
         }
-        }
 
         if (args.length != 1) {
             player.sendMessage("§cUsage: /dagger <fire|ice|water|soul|darkness|backstab>");
