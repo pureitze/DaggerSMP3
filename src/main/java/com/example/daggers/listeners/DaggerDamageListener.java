@@ -75,8 +75,11 @@ public class DaggerDamageListener implements Listener {
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1)); // 5s, Slowness II
         }
         if (pendingDarknessCurse.remove(attacker.getUniqueId())) {
-            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0)); // 6s
-            noSprintManager.disableSprint(target, 120); // matches the 6s darkness duration
+    target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0)); // 6s
+    if (target instanceof Player targetPlayer) {
+        noSprintManager.disableSprint(targetPlayer, 120); // matches the 6s darkness duration
+    }
+}
         }
     }
 
