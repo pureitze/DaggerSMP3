@@ -50,9 +50,15 @@ public class DaggersPlugin extends JavaPlugin {
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
         if (!command.getName().equalsIgnoreCase("dagger")) return false;
 
+        if (!sender.hasPermission("customdaggers.admin")) {
+            sender.sendMessage("§cYou don't have permission to use this command.");
+            return true;
+        }
+
         if (!(sender instanceof Player player)) {
             sender.sendMessage("Only players can run this command.");
             return true;
+        }
         }
 
         if (args.length != 1) {
