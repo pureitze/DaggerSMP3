@@ -147,7 +147,7 @@ public class DaggerDamageListener implements Listener {
     private double handleBackstabDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         if (isBackstab(attacker, target)) {
             target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.7f);
-            return 2.5;
+            return isCrit ? 2.5 : 2.1;
         }
         if (isCrit) return 1.8;
         if (isSweep || isSprint) return 1.3;
