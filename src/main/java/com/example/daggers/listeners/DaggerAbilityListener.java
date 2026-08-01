@@ -1,5 +1,9 @@
 package com.example.daggers.listeners;
 
+import com.example.daggers.DarknessInvisManager;
+import org.bukkit.Bukkit;
+import org.bukkit.Material;
+import org.bukkit.scheduler.BukkitRunnable;
 import com.example.daggers.CooldownManager;
 import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
@@ -35,14 +39,18 @@ public class DaggerAbilityListener implements Listener {
     private final FreezeManager freezeManager;
     private final Set<UUID> pendingSoulCurse;
     private final Set<UUID> pendingDarknessCurse;
+    private final DarknessInvisManager darknessInvisManager;
 
     public DaggerAbilityListener(JavaPlugin plugin, CooldownManager cooldowns, FreezeManager freezeManager,
-                                  Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse) {
+                                  Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse,
+                                  DarknessInvisManager darknessInvisManager) {
         this.plugin = plugin;
         this.cooldowns = cooldowns;
         this.freezeManager = freezeManager;
         this.pendingSoulCurse = pendingSoulCurse;
         this.pendingDarknessCurse = pendingDarknessCurse;
+        this.darknessInvisManager = darknessInvisManager;
+    }
     }
 
     @EventHandler
