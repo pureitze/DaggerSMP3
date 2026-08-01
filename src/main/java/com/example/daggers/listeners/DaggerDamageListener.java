@@ -29,13 +29,17 @@ public class DaggerDamageListener implements Listener {
     // Players who used a right-click "curse my next hit" ability and are
     // waiting to land it. Shared with DaggerAbilityListener.
     private final Set<UUID> pendingSoulCurse;
-    private final Set<UUID> pendingDarknessCurse;
-    private final HitTracker hitTracker;
+  private final Set<UUID> pendingDarknessCurse;
+  private final HitTracker hitTracker;
+  private final NoSprintManager noSprintManager;
 
-    public DaggerDamageListener(Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse, HitTracker hitTracker) {
-        this.pendingSoulCurse = pendingSoulCurse;
-        this.pendingDarknessCurse = pendingDarknessCurse;
-        this.hitTracker = hitTracker;
+  public DaggerDamageListener(Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse, HitTracker hitTracker,
+                               NoSprintManager noSprintManager) {
+      this.pendingSoulCurse = pendingSoulCurse;
+      this.pendingDarknessCurse = pendingDarknessCurse;
+      this.hitTracker = hitTracker;
+      this.noSprintManager = noSprintManager;
+  }
     }
 
     @EventHandler(priority = EventPriority.HIGH)
