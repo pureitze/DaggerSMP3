@@ -5,6 +5,7 @@ import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
 import com.example.daggers.FreezeManager;
 import org.bukkit.FluidCollisionMode;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.Fireball;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
