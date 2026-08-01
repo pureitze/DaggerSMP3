@@ -125,3 +125,5 @@ public class DaggerItem {
 
         return lore;
     }
+}
+
