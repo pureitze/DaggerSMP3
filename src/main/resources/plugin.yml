@@ -8,3 +8,8 @@ commands:
   dagger:
     description: Gives you a custom dagger
     usage: /dagger <fire|ice|water|soul|darkness|backstab>
+permissions:
+  customdaggers.admin:
+    description: Allows use of /dagger to spawn daggers
+    default: op
+    
