@@ -26,9 +26,9 @@ public class DaggerItem {
         meta.setDisplayName(type.getColor() + type.getDisplayName());
         meta.setLore(getLore(type));
 
-        // Cosmetic glow, hidden tooltip enchant text
-        meta.addEnchant(Enchantment.SHARPNESS, 1, true);
-        meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
+        // Cosmetic glow without a fake enchantment, so real enchant books
+  // (Sharpness, Looting, Fire Aspect, etc.) added via anvil show up normally
+  meta.setEnchantmentGlintOverride(true);
 
         // Bump attack damage from netherite's base 8.0 up to 8.5
         AttributeModifier damageModifier = new AttributeModifier(
