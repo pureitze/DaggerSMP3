@@ -113,7 +113,7 @@ public class DaggerDamageListener implements Listener {
 
             target.setHealth(Math.max(0, target.getHealth() - stolenHealth));
 
-            double maxHealth = attacker.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue();
+            double maxHealth = attacker.getAttribute(Attribute.MAX_HEALTH).getValue();
             attacker.setHealth(Math.min(maxHealth, attacker.getHealth() + stolenHealth));
 
             attacker.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 2)); // Regen III, 2s
