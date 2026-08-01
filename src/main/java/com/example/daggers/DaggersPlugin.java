@@ -19,18 +19,22 @@ public class DaggersPlugin extends JavaPlugin {
     private final Set<UUID> pendingSoulCurse = new HashSet<>();
     private final Set<UUID> pendingDarknessCurse = new HashSet<>();
     private FreezeManager freezeManager;
+  private NoSprintManager noSprintManager;
 
     @Override
     public void onEnable() {
         DaggerKeys.init(this);
         freezeManager = new FreezeManager(this);
+  noSprintManager = new NoSprintManager(this);
 
-        getServer().getPluginManager().registerEvents(
-                new DaggerDamageListener(pendingSoulCurse, pendingDarknessCurse, hitTracker), this);
-        getServer().getPluginManager().registerEvents(
-                new DaggerAbilityListener(this, cooldownManager, freezeManager, pendingSoulCurse, pendingDarknessCurse), this);
-        getServer().getPluginManager().registerEvents(
-                new FreezeMovementListener(freezeManager), this);
+  getServer().getPluginManager().registerEvents(
+          new DaggerDamageListener(pendingSoulCurse, pendingDarknessCurse, hitTracker, noSprintManager), this);
+  getServer().getPluginManager().registerEvents(
+          new DaggerAbilityListener(this, cooldownManager, freezeManager, pendingSoulCurse, pendingDarknessCurse), this);
+  getServer().getPluginManager().registerEvents(
+          new FreezeMovementListener(freezeManager), this);
+  getServer().getPluginManager().registerEvents(
+          new com.example.daggers.listeners.NoSprintListener(noSprintManager), this);
 
         getLogger().info("CustomDaggers enabled!");
     }
