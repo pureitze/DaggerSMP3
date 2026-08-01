@@ -80,38 +80,48 @@ public class DaggerItem {
     }
 
     private static List<String> getLore(DaggerType type) {
+        String accent = type.getColor();
         List<String> lore = new java.util.ArrayList<>();
-        lore.add("§78.5 damage");
+
+        lore.add(accent + "§m                    ");
+        lore.add("§f§lDamage: §c8.5");
+        lore.add("");
+        lore.add(accent + "§lPassive");
         lore.addAll(switch (type) {
             case FIRE -> List.of(
-                    "§7Sets enemies ablaze on hit.",
-                    "§7Bonus damage while YOU are on fire.",
-                    "§7Right-click: hurl a fireball (60s)"
+                    "§7§oSets enemies ablaze on hit.",
+                    "§7§oBonus damage while YOU are on fire."
             );
             case ICE -> List.of(
-                    "§7Bonus damage while standing on ice.",
-                    "§7Right-click: freeze a target for 4s (60s)"
+                    "§7§oBonus damage while standing on ice."
             );
             case WATER -> List.of(
-                    "§7Bonus damage while in water.",
-                    "§7Right-click: Dolphin's Grace 15s (60s)"
+                    "§7§oBonus damage while in water."
             );
             case SOUL -> List.of(
-                    "§7Every 5th hit on a target deals bonus damage.",
-                    "§7Every 10th hit steals health + heals you.",
-                    "§7Right-click: curse your next target (60s)"
+                    "§7§oEvery 5th hit deals bonus damage.",
+                    "§7§oEvery 10th hit steals health + heals you."
             );
             case DARKNESS -> List.of(
-                    "§7Every 5th hit on a target deals bonus damage.",
-                    "§7Every 10th hit damages the target's armor.",
-                    "§7Right-click: curse your next target with Darkness (75s)"
+                    "§7§oEvery 5th hit deals bonus damage.",
+                    "§7§oEvery 10th hit damages the target's armor."
             );
             case BACKSTAB -> List.of(
-                    "§7Bonus damage on sprint, sweep, and crit hits.",
-                    "§7Massive bonus damage when striking from behind.",
-                    "§7Right-click: grappling hook, up to 32 blocks (60s)"
+                    "§7§oBonus damage on sprint, sweep, and crit hits.",
+                    "§7§oMassive bonus damage when striking from behind."
             );
         });
+        lore.add("");
+        lore.add(accent + "§lAbility " + "§8[Right-click]");
+        lore.addAll(switch (type) {
+            case FIRE -> List.of("§7Hurl a fireball §8(60s)");
+            case ICE -> List.of("§7Freeze a target for 4s §8(60s)");
+            case WATER -> List.of("§7Dolphin's Grace, 15s §8(60s)");
+            case SOUL -> List.of("§7Curse your next target §8(60s)");
+            case DARKNESS -> List.of("§7Curse your next target with Darkness §8(75s)");
+            case BACKSTAB -> List.of("§7Grappling hook, up to 32 blocks §8(60s)");
+        });
+        lore.add(accent + "§m                    ");
+
         return lore;
     }
-}
