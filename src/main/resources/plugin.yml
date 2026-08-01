@@ -1,0 +1,10 @@
+name: CustomDaggers
+version: '1.0.0'
+main: com.example.daggers.DaggersPlugin
+api-version: '1.21'
+author: YourName
+description: Six custom daggers with unique passive and right-click abilities
+commands:
+  dagger:
+    description: Gives you a custom dagger
+    usage: /dagger <fire|ice|water|soul|darkness|backstab>
