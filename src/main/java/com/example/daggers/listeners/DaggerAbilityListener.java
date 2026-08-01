@@ -51,7 +51,6 @@ public class DaggerAbilityListener implements Listener {
         this.pendingDarknessCurse = pendingDarknessCurse;
         this.darknessInvisManager = darknessInvisManager;
     }
-    }
 
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
@@ -141,7 +140,7 @@ public class DaggerAbilityListener implements Listener {
         return true;
     }
 
-   private boolean castDarknessCurse(Player player) {
+    private boolean castDarknessCurse(Player player) {
         pendingDarknessCurse.add(player.getUniqueId());
         player.sendMessage("§8Your next hit will engulf your target in darkness!");
 
@@ -190,7 +189,6 @@ public class DaggerAbilityListener implements Listener {
             thrower.sendMessage("§8Something unseen prevents you from throwing that...");
             return;
         }
-    }
     }
 
     /**
