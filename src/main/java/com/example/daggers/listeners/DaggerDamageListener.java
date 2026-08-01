@@ -6,7 +6,7 @@ import com.example.daggers.HitTracker;
 import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
-import org.bukkit.entity.EntityEquipment;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
