@@ -108,7 +108,7 @@ public class DaggerAbilityListener implements Listener {
     }
 
     private boolean castFreeze(Player player) {
-        LivingEntity targetEntity = player.getTargetEntity(6);
+        Entity targetEntity = player.getTargetEntity(6);
         if (!(targetEntity instanceof Player target)) {
             player.sendMessage("§cNo player in range to freeze.");
             return false; // don't burn the cooldown if there's nothing to hit
