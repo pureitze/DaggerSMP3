@@ -74,15 +74,13 @@ public class DaggerDamageListener implements Listener {
             target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 0));    // 3s
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1)); // 5s, Slowness II
         }
-        if (pendingDarknessCurse.remove(attacker.getUniqueId())) {
-    target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0)); // 6s
-    if (target instanceof Player targetPlayer) {
-        noSprintManager.disableSprint(targetPlayer, 120); // matches the 6s darkness duration
-    }
-}
+  if (pendingDarknessCurse.remove(attacker.getUniqueId())) {
+            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0)); // 6s
+            if (target instanceof Player targetPlayer) {
+                noSprintManager.disableSprint(targetPlayer, 120); // matches the 6s darkness duration
+            }
         }
     }
-
     private double handleFireDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         // Base ability: every hit sets the target on fire (5 seconds)
         target.setFireTicks(Math.max(target.getFireTicks(), 100));
