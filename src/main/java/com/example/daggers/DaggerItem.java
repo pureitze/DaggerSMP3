@@ -27,7 +27,7 @@ public class DaggerItem {
         meta.setLore(getLore(type));
 
         // Cosmetic glow, hidden tooltip enchant text
-        meta.addEnchant(Enchantment.DAMAGE_ALL, 1, true);
+        meta.addEnchant(Enchantment.SHARPNESS, 1, true);
         meta.addItemFlags(ItemFlag.HIDE_ENCHANTS);
 
         // Bump attack damage from netherite's base 8.0 up to 8.5
@@ -38,7 +38,7 @@ public class DaggerItem {
                 AttributeModifier.Operation.ADD_NUMBER,
                 EquipmentSlot.HAND
         );
-        meta.addAttributeModifier(Attribute.GENERIC_ATTACK_DAMAGE, damageModifier);
+        meta.addAttributeModifier(Attribute.ATTACK_DAMAGE, damageModifier);
         // Hide the vanilla "+0.5 Attack Damage" attribute line since the lore
         // already states "8.5 damage" - keeps the tooltip clean
         meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
