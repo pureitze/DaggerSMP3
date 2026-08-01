@@ -3,7 +3,9 @@ package com.example.daggers.listeners;
 import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
 import com.example.daggers.HitTracker;
+import com.example.daggers.NoSprintManager;
 import org.bukkit.Material;
+import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.EntityEquipment;
@@ -29,17 +31,16 @@ public class DaggerDamageListener implements Listener {
     // Players who used a right-click "curse my next hit" ability and are
     // waiting to land it. Shared with DaggerAbilityListener.
     private final Set<UUID> pendingSoulCurse;
-  private final Set<UUID> pendingDarknessCurse;
-  private final HitTracker hitTracker;
-  private final NoSprintManager noSprintManager;
+    private final Set<UUID> pendingDarknessCurse;
+    private final HitTracker hitTracker;
+    private final NoSprintManager noSprintManager;
 
-  public DaggerDamageListener(Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse, HitTracker hitTracker,
-                               NoSprintManager noSprintManager) {
-      this.pendingSoulCurse = pendingSoulCurse;
-      this.pendingDarknessCurse = pendingDarknessCurse;
-      this.hitTracker = hitTracker;
-      this.noSprintManager = noSprintManager;
-  }
+    public DaggerDamageListener(Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse, HitTracker hitTracker,
+                                 NoSprintManager noSprintManager) {
+        this.pendingSoulCurse = pendingSoulCurse;
+        this.pendingDarknessCurse = pendingDarknessCurse;
+        this.hitTracker = hitTracker;
+        this.noSprintManager = noSprintManager;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -74,9 +75,8 @@ public class DaggerDamageListener implements Listener {
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1)); // 5s, Slowness II
         }
         if (pendingDarknessCurse.remove(attacker.getUniqueId())) {
-      target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0)); // 6s
-      noSprintManager.disableSprint(target, 120); // matches the 6s darkness duration
-  }
+            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0)); // 6s
+            noSprintManager.disableSprint(target, 120); // matches the 6s darkness duration
         }
     }
 
@@ -144,14 +144,13 @@ public class DaggerDamageListener implements Listener {
     }
 
     private double handleBackstabDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
-      if (isBackstab(attacker, target)) {
-          target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.7f);
-          return 2.5;
-      }
-      if (isCrit) return 1.8;
-      if (isSweep || isSprint) return 1.3;
-      return 1.0;
-  }
+        if (isBackstab(attacker, target)) {
+            target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.7f);
+            return 2.5;
+        }
+        if (isCrit) return 1.8;
+        if (isSweep || isSprint) return 1.3;
+        return 1.0;
     }
 
     private boolean isStandingOnIce(Player player) {
