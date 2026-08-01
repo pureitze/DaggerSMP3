@@ -141,10 +141,56 @@ public class DaggerAbilityListener implements Listener {
         return true;
     }
 
-    private boolean castDarknessCurse(Player player) {
+   private boolean castDarknessCurse(Player player) {
         pendingDarknessCurse.add(player.getUniqueId());
         player.sendMessage("§8Your next hit will engulf your target in darkness!");
+
+        final long durationTicks = 160L; // 8 seconds
+        player.addPotionEffect(new PotionEffect(PotionEffectType.INVISIBILITY, (int) durationTicks, 0, false, false));
+        darknessInvisManager.activate(player, durationTicks);
+
+        new BukkitRunnable() {
+            long elapsed = 0;
+
+            @Override
+            public void run() {
+                if (!player.isOnline() || elapsed >= durationTicks) {
+                    cancel();
+                    return;
+                }
+                for (Player enemy : Bukkit.getOnlinePlayers()) {
+                    if (enemy.equals(player)) continue;
+                    if (!enemy.getWorld().equals(player.getWorld())) continue;
+                    if (enemy.getLocation().distance(player.getLocation()) > 16.0) continue;
+
+                    enemy.addPotionEffect(new PotionEffect(PotionEffectType.BLINDNESS, 40, 0, false, false)); // 2s, refreshed each pulse
+                }
+                elapsed += 20;
+            }
+        }.runTaskTimer(plugin, 0L, 20L); // pulses once per second
+
         return true;
+    }
+
+    @EventHandler
+    public void onPearlThrow(PlayerInteractEvent event) {
+        if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+
+        ItemStack item = event.getItem();
+        if (item == null || item.getType() != Material.ENDER_PEARL) return;
+
+        Player thrower = event.getPlayer();
+        for (Player nearby : Bukkit.getOnlinePlayers()) {
+            if (nearby.equals(thrower)) continue;
+            if (!darknessInvisManager.isActive(nearby)) continue;
+            if (!nearby.getWorld().equals(thrower.getWorld())) continue;
+            if (nearby.getLocation().distance(thrower.getLocation()) > 16.0) continue;
+
+            event.setCancelled(true);
+            thrower.sendMessage("§8Something unseen prevents you from throwing that...");
+            return;
+        }
+    }
     }
 
     /**
