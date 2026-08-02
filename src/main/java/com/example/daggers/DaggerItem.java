@@ -30,19 +30,6 @@ public class DaggerItem {
   // (Sharpness, Looting, Fire Aspect, etc.) added via anvil show up normally
   meta.setEnchantmentGlintOverride(true);
 
-        // Bump attack damage from netherite's base 8.0 up to 8.5
-        AttributeModifier damageModifier = new AttributeModifier(
-                UUID.randomUUID(),
-                "dagger_damage_bonus",
-                DAMAGE_BONUS,
-                AttributeModifier.Operation.ADD_NUMBER,
-                EquipmentSlot.HAND
-        );
-        meta.addAttributeModifier(Attribute.ATTACK_DAMAGE, damageModifier);
-        // Hide the vanilla "+0.5 Attack Damage" attribute line since the lore
-        // already states "8.5 damage" - keeps the tooltip clean
-        meta.addItemFlags(ItemFlag.HIDE_ATTRIBUTES);
-
         // Custom model data lets the resource pack swap this item's texture
         // without changing its underlying material (still a netherite sword
         // under the hood, just re-skinned client-side). Must match the
