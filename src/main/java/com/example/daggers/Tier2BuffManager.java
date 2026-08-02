@@ -17,13 +17,15 @@ public class Tier2BuffManager {
         this.plugin = plugin;
     }
 
-    public void activate(Player player, DaggerType type, long durationTicks) {
-        UUID id = player.getUniqueId();
-        activeBuffs.put(id, type);
-        Bukkit.getScheduler().runTaskLater(plugin, () -> {
-            if (activeBuffs.get(id) == type) activeBuffs.remove(id);
-        }, durationTicks);
-    }
+    public void activate(Player player, DaggerType type, long durationMillis) {
+    activeBuffs.put(player.getUniqueId(), type);
+    long ticks = durationMillis / 50L; // 1 tick = 50ms
+    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        if (activeBuffs.get(player.getUniqueId()) == type) {
+            activeBuffs.remove(player.getUniqueId());
+        }
+    }, ticks);
+}
 
     public boolean hasBuff(Player player, DaggerType type) {
         return activeBuffs.get(player.getUniqueId()) == type;
