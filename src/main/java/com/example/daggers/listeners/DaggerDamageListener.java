@@ -6,20 +6,19 @@ import com.example.daggers.HitTracker;
 import com.example.daggers.NoSprintManager;
 import com.example.daggers.Tier2BuffManager;
 import org.bukkit.Material;
-import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
-import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.bukkit.inventory.EntityEquipment;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.potion.PotionEffect;
 import org.bukkit.potion.PotionEffectType;
 import org.bukkit.util.Vector;
@@ -29,6 +28,7 @@ import java.util.UUID;
 
 public class DaggerDamageListener implements Listener {
 
+    private final JavaPlugin plugin;
     private final Set<UUID> pendingSoulCurse;
     private final Set<UUID> pendingDarknessCurse;
     private final HitTracker hitTracker;
@@ -36,9 +36,10 @@ public class DaggerDamageListener implements Listener {
     private final Tier2BuffManager tier2BuffManager;
     private final DaggerAbilityListener abilityListener;
 
-    public DaggerDamageListener(Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse, HitTracker hitTracker,
-                                 NoSprintManager noSprintManager, Tier2BuffManager tier2BuffManager,
-                                 DaggerAbilityListener abilityListener) {
+    public DaggerDamageListener(JavaPlugin plugin, Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse,
+                                 HitTracker hitTracker, NoSprintManager noSprintManager,
+                                 Tier2BuffManager tier2BuffManager, DaggerAbilityListener abilityListener) {
+        this.plugin = plugin;
         this.pendingSoulCurse = pendingSoulCurse;
         this.pendingDarknessCurse = pendingDarknessCurse;
         this.hitTracker = hitTracker;
@@ -47,71 +48,72 @@ public class DaggerDamageListener implements Listener {
         this.abilityListener = abilityListener;
     }
 
-    @EventHandler(priority = EventPriority.HIGH)
+    @EventHandler
     public void onDamage(EntityDamageByEntityEvent event) {
-        if (!(event.getDamager() instanceof Player attacker)) return;
+        if (!(event.getDamager() instanceof Player player)) return;
         if (!(event.getEntity() instanceof LivingEntity target)) return;
 
-        ItemStack weapon = attacker.getInventory().getItemInMainHand();
-        DaggerType type = DaggerItem.getType(weapon);
+        ItemStack item = player.getInventory().getItemInMainHand();
+        DaggerType type = DaggerItem.getType(item);
         if (type == null) return;
 
         boolean isSweep = event.getCause() == EntityDamageEvent.DamageCause.ENTITY_SWEEP_ATTACK;
-        boolean isSprint = attacker.isSprinting();
-        boolean isCrit = isApproximateCrit(attacker);
+        boolean isSprint = player.isSprinting();
+        boolean isCrit = isApproximateCrit(player);
 
         double multiplier = switch (type) {
-            case FIRE -> handleFireDagger(attacker, target, isCrit, isSweep, isSprint);
-            case ICE -> handleIceDagger(attacker, isCrit, isSweep, isSprint);
-            case WATER -> handleWaterDagger(attacker);
-            case SOUL -> handleSoulDagger(attacker, target, isCrit);
-            case DARKNESS -> handleDarknessDagger(attacker, target, isCrit, isSweep, isSprint);
-            case BACKSTAB -> handleBackstabDagger(attacker, target, isCrit, isSweep, isSprint);
+            case FIRE -> handleFireDagger(player, target, isCrit, isSweep, isSprint);
+            case ICE -> handleIceDagger(player, isCrit, isSweep, isSprint);
+            case WATER -> handleWaterDagger(player);
+            case SOUL -> handleSoulDagger(player, target, isCrit);
+            case DARKNESS -> handleDarknessDagger(player, target, isCrit, isSweep, isSprint);
+            case BACKSTAB -> handleBackstabDagger(player, target, isCrit, isSweep, isSprint);
+            case WIND -> handleWindDagger(player, isCrit);
+            case ZEUS -> handleZeusDagger(player, target, isCrit, isSweep, isSprint);
+            case HEALTH -> handleHealthDagger(player, target, isCrit);
         };
 
         if (multiplier != 1.0) {
             event.setDamage(event.getDamage() * multiplier);
         }
 
-        if (pendingSoulCurse.remove(attacker.getUniqueId())) {
+        if (pendingSoulCurse.remove(player.getUniqueId())) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 0));
             target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1));
         }
-        if (pendingDarknessCurse.remove(attacker.getUniqueId())) {
+
+        if (pendingDarknessCurse.remove(player.getUniqueId())) {
             target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0));
             if (target instanceof Player targetPlayer) {
-                noSprintManager.disableSprint(targetPlayer, 120);
+                noSprintManager.disableSprint(targetPlayer, 3000L);
             }
         }
 
-        // Soul Dagger Tier 2: one-time bonus hit, consumed here
-        if (abilityListener.consumeSoulTier2(attacker.getUniqueId())) {
-            target.setHealth(Math.max(0, target.getHealth() - 6.0)); // 3 hearts, true damage
-            target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 0)); // 5s
+        if (abilityListener.consumeSoulTier2(player.getUniqueId())) {
+            target.setHealth(Math.max(0, target.getHealth() - 6.0));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 0));
         }
     }
 
-    private double handleFireDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
+    private double handleFireDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         target.setFireTicks(Math.max(target.getFireTicks(), 100));
 
-        if (tier2BuffManager.hasBuff(attacker, DaggerType.FIRE)) {
+        if (tier2BuffManager.hasBuff(player, DaggerType.FIRE)) {
             return isCrit ? 2.0 : 1.5;
         }
-
-        if (attacker.getFireTicks() > 0) {
+        if (player.getFireTicks() > 0) {
             if (isCrit) return 1.8;
             if (isSweep || isSprint) return 1.3;
         }
         return 1.0;
     }
 
-    private double handleIceDagger(Player attacker, boolean isCrit, boolean isSweep, boolean isSprint) {
-        boolean onIce = isStandingOnIce(attacker);
+    private double handleIceDagger(Player player, boolean isCrit, boolean isSweep, boolean isSprint) {
+        boolean onIce = isStandingOnIce(player);
 
-        if (tier2BuffManager.hasBuff(attacker, DaggerType.ICE) && onIce) {
+        if (tier2BuffManager.hasBuff(player, DaggerType.ICE) && onIce) {
             return isCrit ? 2.0 : 1.5;
         }
-
         if (onIce) {
             if (isCrit) return 1.8;
             if (isSweep || isSprint) return 1.3;
@@ -119,87 +121,131 @@ public class DaggerDamageListener implements Listener {
         return 1.0;
     }
 
-    private double handleWaterDagger(Player attacker) {
-        if (tier2BuffManager.hasBuff(attacker, DaggerType.WATER)) {
+    private double handleWaterDagger(Player player) {
+        if (tier2BuffManager.hasBuff(player, DaggerType.WATER)) {
             return 1.8;
         }
-        return attacker.isInWater() ? 1.5 : 1.0;
+        return player.isInWater() ? 1.5 : 1.0;
     }
 
-    private double handleSoulDagger(Player attacker, LivingEntity target, boolean isCrit) {
-        int hitCount = hitTracker.recordHit(attacker.getUniqueId(), target.getUniqueId());
+    private double handleSoulDagger(Player player, LivingEntity target, boolean isCrit) {
+        int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
         double multiplier = 1.0;
 
-        if (hitCount % 5 == 0) {
-            multiplier = isCrit ? 2.0 : 1.5;
+        if (hits % 5 == 0) {
+            multiplier = isCrit ? 1.8 : 1.3;
         }
 
-        if (hitCount % 10 == 0) {
-            double stolenHealth = 3.0;
-            target.setHealth(Math.max(0, target.getHealth() - stolenHealth));
-            double maxHealth = attacker.getAttribute(Attribute.MAX_HEALTH).getValue();
-            attacker.setHealth(Math.min(maxHealth, attacker.getHealth() + stolenHealth));
-            attacker.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 2));
+        if (hits % 10 == 0) {
+            double stolen = 3.0;
+            target.setHealth(Math.max(0, target.getHealth() - stolen));
+
+            double maxHealth = player.getAttribute(Attribute.MAX_HEALTH).getValue();
+            player.setHealth(Math.min(maxHealth, player.getHealth() + stolen));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 2));
         }
 
         return multiplier;
     }
 
-    private double handleDarknessDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
-        if (tier2BuffManager.hasBuff(attacker, DaggerType.DARKNESS)) {
+    private double handleDarknessDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
+        if (tier2BuffManager.hasBuff(player, DaggerType.DARKNESS)) {
             return isCrit ? 2.0 : 1.5;
         }
 
-        int hitCount = hitTracker.recordHit(attacker.getUniqueId(), target.getUniqueId());
+        int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
         double multiplier = 1.0;
 
-        if (hitCount % 5 == 0) {
-            multiplier = isCrit ? 2.0 : 1.5;
+        if (hits % 5 == 0) {
+            multiplier = isCrit ? 1.8 : 1.5;
         }
 
-        if (hitCount % 10 == 0) {
+        if (hits % 10 == 0) {
             damageArmorDurability(target, 25);
         }
 
         return multiplier;
     }
 
-    private double handleBackstabDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
-        if (isBackstab(attacker, target)) {
-            target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.7f);
+    private double handleBackstabDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
+        if (isBackstab(player, target)) {
+            target.getWorld().playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.6f);
             return isCrit ? 2.0 : 1.8;
         }
         if (isCrit) return 1.5;
-        if (isSweep || isSprint) return 1.2;
-        return 1.2;
+        if (isSweep || isSprint) return 1.3;
+        return 1.3;
+    }
+
+    private double handleWindDagger(Player player, boolean isCrit) {
+        if (tier2BuffManager.hasBuff(player, DaggerType.WIND)) {
+            return isCrit ? 1.6 : 1.3;
+        }
+        return 1.0;
+    }
+
+    private double handleZeusDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
+        boolean storming = player.getWorld().hasStorm() && !player.isInWater();
+        double multiplier = 1.0;
+
+        if (storming) {
+            multiplier = isCrit ? 1.8 : 1.3;
+        }
+
+        int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
+        if (hits % 10 == 0) {
+            trapInCobweb(target);
+        }
+
+        return multiplier;
+    }
+
+    private double handleHealthDagger(Player player, LivingEntity target, boolean isCrit) {
+        if (tier2BuffManager.hasBuff(player, DaggerType.HEALTH)) {
+            return isCrit ? 2.0 : 1.5;
+        }
+
+        int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
+        if (hits % 10 == 0) {
+            player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));
+        }
+
+        return 1.0;
+    }
+
+    private void trapInCobweb(LivingEntity target) {
+        Block head = target.getLocation().add(0, 1, 0).getBlock();
+        Material original = head.getType();
+        if (original != Material.AIR) return; // don't overwrite something already there
+
+        head.setType(Material.COBWEB);
+        plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
+            if (head.getType() == Material.COBWEB) {
+                head.setType(Material.AIR);
+            }
+        }, 100L); // reverts after 5s
     }
 
     private boolean isStandingOnIce(Player player) {
-        Block below = player.getLocation().subtract(0, 1, 0).getBlock();
-        Material type = below.getType();
+        Material type = player.getLocation().subtract(0, 1, 0).getBlock().getType();
         return type == Material.ICE || type == Material.PACKED_ICE
                 || type == Material.BLUE_ICE || type == Material.FROSTED_ICE;
     }
 
-    private boolean isApproximateCrit(Player attacker) {
-        return attacker.getFallDistance() > 0f
-                && !attacker.isOnGround()
-                && !attacker.isInsideVehicle()
-                && !attacker.isSprinting()
-                && !attacker.hasPotionEffect(PotionEffectType.BLINDNESS);
+    private boolean isApproximateCrit(Player player) {
+        return player.getFallDistance() > 0f
+                && !player.isOnGround()
+                && !player.isInsideVehicle()
+                && !player.isSprinting()
+                && !player.hasPotionEffect(PotionEffectType.BLINDNESS);
     }
 
-    private boolean isBackstab(Player attacker, LivingEntity target) {
+    private boolean isBackstab(Player player, LivingEntity target) {
         Vector targetFacing = target.getLocation().getDirection().setY(0).normalize();
-        Vector targetToAttacker = attacker.getLocation().toVector()
-                .subtract(target.getLocation().toVector())
-                .setY(0);
-
-        if (targetToAttacker.lengthSquared() == 0) return false;
-        targetToAttacker.normalize();
-
-        double dot = targetFacing.dot(targetToAttacker);
-        return dot < -0.5;
+        Vector toAttacker = player.getLocation().toVector().subtract(target.getLocation().toVector()).setY(0);
+        if (toAttacker.lengthSquared() == 0) return false;
+        toAttacker.normalize();
+        return targetFacing.dot(toAttacker) < -0.5;
     }
 
     private void damageArmorDurability(LivingEntity target, int amount) {
@@ -212,14 +258,14 @@ public class DaggerDamageListener implements Listener {
             if (piece == null || piece.getType() == Material.AIR) continue;
 
             ItemMeta meta = piece.getItemMeta();
-            if (meta instanceof Damageable damageable) {
-                int newDamage = damageable.getDamage() + amount;
-                if (newDamage >= piece.getType().getMaxDurability()) {
-                    armor[i] = null;
-                } else {
-                    damageable.setDamage(newDamage);
-                    piece.setItemMeta((ItemMeta) damageable);
-                }
+            if (!(meta instanceof Damageable damageable)) continue;
+
+            int newDamage = damageable.getDamage() + amount;
+            if (newDamage >= piece.getType().getMaxDurability()) {
+                armor[i] = null;
+            } else {
+                damageable.setDamage(newDamage);
+                piece.setItemMeta(meta);
             }
         }
         equipment.setArmorContents(armor);
