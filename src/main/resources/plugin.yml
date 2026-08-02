@@ -15,3 +15,4 @@ permissions:
   customdaggers.admin:
     description: Allows use of /dagger to spawn daggers, and /drecipe admin to edit recipes
     default: op
+    
