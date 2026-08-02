@@ -40,7 +40,7 @@ public class DaggerAbilityListener implements Listener {
 
     private static final String FIRE_DAGGER_PROJECTILE_TAG = "flame_dagger_fireball";
     private static final double GRAPPLE_RANGE = 32.0;
-    private static final int TIER2_COOLDOWN_SECONDS = 90;
+    private static final int TIER2_COOLDOWN_SECONDS = 120;
 
     private final JavaPlugin plugin;
     private final CooldownManager cooldowns;
