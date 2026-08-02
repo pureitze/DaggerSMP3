@@ -8,8 +8,10 @@ commands:
   dagger:
     description: Gives you a custom dagger
     usage: /dagger <fire|ice|water|soul|darkness|backstab>
+  drecipe:
+    description: View dagger recipes, or edit them with the admin subcommand
+    usage: /drecipe [admin]
 permissions:
   customdaggers.admin:
-    description: Allows use of /dagger to spawn daggers
+    description: Allows use of /dagger to spawn daggers, and /drecipe admin to edit recipes
     default: op
-    
