@@ -16,10 +16,14 @@ import java.util.Map;
 public class RecipeGuiManager {
 
     public static final int RESULT_SLOT = 4;
-    public static final int[] INGREDIENT_SLOTS = {10, 12, 14, 16};
+    public static final int[] INGREDIENT_SLOTS;
     public static final int SAVE_SLOT = 22;
     public static final int BACK_SLOT_ADMIN = 18;
     public static final int BACK_SLOT_VIEW = 22;
+
+    static {
+        INGREDIENT_SLOTS = new int[]{10, 12, 14, 16};
+    }
 
     private final JavaPlugin plugin;
     private final RecipeManager recipeManager;
@@ -29,41 +33,10 @@ public class RecipeGuiManager {
         this.recipeManager = recipeManager;
     }
 
-    public static class AdminMainMenuHolder implements InventoryHolder {
-        private Inventory inventory;
-        @Override public Inventory getInventory() { return inventory; }
-        public void setInventory(Inventory inventory) { this.inventory = inventory; }
-    }
-
-    public static class AdminEditorHolder implements InventoryHolder {
-        public final DaggerType type;
-        private Inventory inventory;
-        public AdminEditorHolder(DaggerType type) { this.type = type; }
-        @Override public Inventory getInventory() { return inventory; }
-        public void setInventory(Inventory inventory) { this.inventory = inventory; }
-    }
-
-    public static class ViewMainMenuHolder implements InventoryHolder {
-        private Inventory inventory;
-        @Override public Inventory getInventory() { return inventory; }
-        public void setInventory(Inventory inventory) { this.inventory = inventory; }
-    }
-
-    public static class ViewRecipeHolder implements InventoryHolder {
-        public final DaggerType type;
-        private Inventory inventory;
-        public ViewRecipeHolder(DaggerType type) { this.type = type; }
-        @Override public Inventory getInventory() { return inventory; }
-        public void setInventory(Inventory inventory) { this.inventory = inventory; }
-    }
-
-    // ---------- Read-only viewer: /drecipe ----------
-
     public void openViewMainMenu(Player player) {
         ViewMainMenuHolder holder = new ViewMainMenuHolder();
         Inventory inv = Bukkit.createInventory(holder, 9, "§8Dagger Recipes");
         holder.setInventory(inv);
-
         fillGlass(inv, 9);
 
         int slot = 0;
@@ -71,6 +44,10 @@ public class RecipeGuiManager {
             inv.setItem(slot, DaggerItem.create(type));
             slot++;
         }
+
+        // Slot 8 was unused glass filler in the 9-slot row; the Upgrader lives there now.
+        inv.setItem(8, UpgraderItem.create());
+
         player.openInventory(inv);
     }
 
@@ -78,10 +55,42 @@ public class RecipeGuiManager {
         ViewRecipeHolder holder = new ViewRecipeHolder(type);
         Inventory inv = Bukkit.createInventory(holder, 27, "§8Recipe: " + type.getDisplayName());
         holder.setInventory(inv);
-
         fillGlass(inv, 27);
+
         inv.setItem(RESULT_SLOT, DaggerItem.create(type));
         placeIngredientDisplay(inv, type);
+
+        inv.setItem(BACK_SLOT_VIEW, namedItem(Material.ARROW, "§7« Back"));
+
+        player.openInventory(inv);
+    }
+
+    public void openUpgraderRecipe(Player player) {
+        UpgraderRecipeHolder holder = new UpgraderRecipeHolder();
+        Inventory inv = Bukkit.createInventory(holder, 27, "§8Recipe: Dagger Upgrader");
+        holder.setInventory(inv);
+        fillGlass(inv, 27);
+
+        inv.setItem(RESULT_SLOT, UpgraderItem.create());
+
+        Map<Material, Integer> ingredients = new LinkedHashMap<>();
+        ingredients.put(Material.DIAMOND_BLOCK, 4);
+        ingredients.put(Material.NETHERITE_INGOT, 4);
+        ingredients.put(Material.NETHER_STAR, 1);
+
+        int i = 0;
+        for (Map.Entry<Material, Integer> entry : ingredients.entrySet()) {
+            if (i >= INGREDIENT_SLOTS.length) break;
+
+            ItemStack item = new ItemStack(entry.getKey(), Math.min(entry.getValue(), entry.getKey().getMaxStackSize()));
+            ItemMeta meta = item.getItemMeta();
+            meta.setLore(List.of("§7Required: §f" + entry.getValue()));
+            item.setItemMeta(meta);
+
+            inv.setItem(INGREDIENT_SLOTS[i], item);
+            i++;
+        }
+
         inv.setItem(BACK_SLOT_VIEW, namedItem(Material.ARROW, "§7« Back"));
 
         player.openInventory(inv);
@@ -89,25 +98,25 @@ public class RecipeGuiManager {
 
     private void placeIngredientDisplay(Inventory inv, DaggerType type) {
         Map<Material, Integer> ingredients = recipeManager.getIngredients(type);
+
         int i = 0;
         for (Map.Entry<Material, Integer> entry : ingredients.entrySet()) {
             if (i >= INGREDIENT_SLOTS.length) break;
-            ItemStack display = new ItemStack(entry.getKey(), Math.min(entry.getValue(), entry.getKey().getMaxStackSize()));
-            ItemMeta meta = display.getItemMeta();
+
+            ItemStack item = new ItemStack(entry.getKey(), Math.min(entry.getValue(), entry.getKey().getMaxStackSize()));
+            ItemMeta meta = item.getItemMeta();
             meta.setLore(List.of("§7Required: §f" + entry.getValue()));
-            display.setItemMeta(meta);
-            inv.setItem(INGREDIENT_SLOTS[i], display);
+            item.setItemMeta(meta);
+
+            inv.setItem(INGREDIENT_SLOTS[i], item);
             i++;
         }
     }
-
-    // ---------- Admin editor: /drecipe admin ----------
 
     public void openAdminMainMenu(Player player) {
         AdminMainMenuHolder holder = new AdminMainMenuHolder();
         Inventory inv = Bukkit.createInventory(holder, 9, "§8[Admin] Dagger Recipes");
         holder.setInventory(inv);
-
         fillGlass(inv, 9);
 
         int slot = 0;
@@ -115,6 +124,7 @@ public class RecipeGuiManager {
             inv.setItem(slot, DaggerItem.create(type));
             slot++;
         }
+
         player.openInventory(inv);
     }
 
@@ -122,8 +132,8 @@ public class RecipeGuiManager {
         AdminEditorHolder holder = new AdminEditorHolder(type);
         Inventory inv = Bukkit.createInventory(holder, 27, "§8[Admin] Edit: " + type.getDisplayName());
         holder.setInventory(inv);
-
         fillGlass(inv, 27);
+
         inv.setItem(RESULT_SLOT, DaggerItem.create(type));
 
         Map<Material, Integer> ingredients = recipeManager.getIngredients(type);
@@ -166,7 +176,9 @@ public class RecipeGuiManager {
 
     private void fillGlass(Inventory inv, int size) {
         ItemStack filler = namedItem(Material.GRAY_STAINED_GLASS_PANE, " ");
-        for (int i = 0; i < size; i++) inv.setItem(i, filler);
+        for (int i = 0; i < size; i++) {
+            inv.setItem(i, filler);
+        }
     }
 
     private ItemStack namedItem(Material material, String name) {
@@ -175,5 +187,80 @@ public class RecipeGuiManager {
         meta.setDisplayName(name);
         item.setItemMeta(meta);
         return item;
+    }
+
+    public static class ViewMainMenuHolder implements InventoryHolder {
+        private Inventory inventory;
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+    }
+
+    public static class ViewRecipeHolder implements InventoryHolder {
+        public final DaggerType type;
+        private Inventory inventory;
+
+        public ViewRecipeHolder(DaggerType type) {
+            this.type = type;
+        }
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+    }
+
+    public static class UpgraderRecipeHolder implements InventoryHolder {
+        private Inventory inventory;
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+    }
+
+    public static class AdminMainMenuHolder implements InventoryHolder {
+        private Inventory inventory;
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+    }
+
+    public static class AdminEditorHolder implements InventoryHolder {
+        public final DaggerType type;
+        private Inventory inventory;
+
+        public AdminEditorHolder(DaggerType type) {
+            this.type = type;
+        }
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
     }
 }
