@@ -67,10 +67,10 @@ public class DaggersPlugin extends JavaPlugin {
         getServer().removeRecipe(key);
 
         ShapedRecipe recipe = new ShapedRecipe(key, UpgraderItem.create());
-        recipe.shape("DND", "NBN", "DND");
-        recipe.setIngredient('D', Material.DIAMOND_BLOCK);
-        recipe.setIngredient('N', Material.NETHERITE_INGOT);
-        recipe.setIngredient('B', Material.BEACON);
+        recipe.shape("DND", "NSN", "DND");
+recipe.setIngredient('D', Material.DIAMOND_BLOCK);
+recipe.setIngredient('N', Material.NETHERITE_INGOT);
+recipe.setIngredient('S', Material.NETHER_STAR);
 
         getServer().addRecipe(recipe);
     }
