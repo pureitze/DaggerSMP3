@@ -9,9 +9,12 @@ import java.util.List;
 
 public class UpgraderItem {
 
+    public static final int CUSTOM_MODEL_DATA = 2001;
+
     public static ItemStack create() {
         ItemStack item = new ItemStack(Material.NETHER_STAR);
         ItemMeta meta = item.getItemMeta();
+        meta.setCustomModelData(CUSTOM_MODEL_DATA);
         meta.setDisplayName("§d§lDagger Upgrader");
         meta.setLore(List.of(
                 "§7Combine with a Tier I dagger to",
