@@ -312,7 +312,7 @@ public class DaggerAbilityListener implements Listener {
     }
 
     private void castBackstabTier2(Player player) {
-        player.addPotionEffect(new PotionEffect(PotionEffectType.DAMAGE_RESISTANCE, 160, 1)); // Resistance II, 8s
+        player.addPotionEffect(new PotionEffect(PotionEffectType.RESISTANCE, 160, 1)); // Resistance II, 8s
         player.addPotionEffect(new PotionEffect(PotionEffectType.SPEED, 160, 2)); // Speed III, 8s
         player.sendMessage("§4§lYou feel unstoppable!");
     }
