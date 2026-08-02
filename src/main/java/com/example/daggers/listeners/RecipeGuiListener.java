@@ -6,6 +6,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 
@@ -20,40 +21,64 @@ public class RecipeGuiListener implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
-        if (!(holder instanceof RecipeGuiManager.MainMenuHolder) && !(holder instanceof RecipeGuiManager.EditorHolder)) {
-            return;
-        }
         if (!(event.getWhoClicked() instanceof Player player)) return;
 
-        if (holder instanceof RecipeGuiManager.MainMenuHolder) {
+        if (holder instanceof RecipeGuiManager.ViewMainMenuHolder) {
             event.setCancelled(true);
             int slot = event.getRawSlot();
             DaggerType[] types = DaggerType.values();
             if (slot >= 0 && slot < types.length) {
-                guiManager.openEditor(player, types[slot]);
+                guiManager.openViewRecipe(player, types[slot]);
             }
             return;
         }
 
-        RecipeGuiManager.EditorHolder editorHolder = (RecipeGuiManager.EditorHolder) holder;
-        int rawSlot = event.getRawSlot();
-        Inventory topInventory = event.getView().getTopInventory();
+        if (holder instanceof RecipeGuiManager.ViewRecipeHolder) {
+            event.setCancelled(true);
+            if (event.getRawSlot() == RecipeGuiManager.BACK_SLOT_VIEW) {
+                guiManager.openViewMainMenu(player);
+            }
+            return;
+        }
 
-        if (rawSlot == RecipeGuiManager.SAVE_SLOT) {
+        if (holder instanceof RecipeGuiManager.AdminMainMenuHolder) {
             event.setCancelled(true);
-            guiManager.handleSave(player, topInventory, editorHolder.type);
-            guiManager.openEditor(player, editorHolder.type);
+            int slot = event.getRawSlot();
+            DaggerType[] types = DaggerType.values();
+            if (slot >= 0 && slot < types.length) {
+                guiManager.openAdminEditor(player, types[slot]);
+            }
             return;
         }
-        if (rawSlot == RecipeGuiManager.BACK_SLOT) {
-            event.setCancelled(true);
-            guiManager.openMainMenu(player);
-            return;
+
+        if (holder instanceof RecipeGuiManager.AdminEditorHolder editorHolder) {
+            int rawSlot = event.getRawSlot();
+            Inventory topInventory = event.getView().getTopInventory();
+
+            if (rawSlot == RecipeGuiManager.SAVE_SLOT) {
+                event.setCancelled(true);
+                guiManager.handleSave(player, topInventory, editorHolder.type);
+                guiManager.openAdminEditor(player, editorHolder.type);
+                return;
+            }
+            if (rawSlot == RecipeGuiManager.BACK_SLOT_ADMIN) {
+                event.setCancelled(true);
+                guiManager.openAdminMainMenu(player);
+                return;
+            }
+            for (int ingredientSlot : RecipeGuiManager.INGREDIENT_SLOTS) {
+                if (rawSlot == ingredientSlot) return; // allow free placement/removal
+            }
+            if (rawSlot >= 0 && rawSlot < topInventory.getSize()) {
+                event.setCancelled(true);
+            }
         }
-        if (rawSlot == RecipeGuiManager.BLADE_SLOT || rawSlot == RecipeGuiManager.HANDLE_SLOT) {
-            return;
-        }
-        if (rawSlot >= 0 && rawSlot < topInventory.getSize()) {
+    }
+
+    @EventHandler
+    public void onDrag(InventoryDragEvent event) {
+        InventoryHolder holder = event.getInventory().getHolder();
+        if (holder instanceof RecipeGuiManager.ViewMainMenuHolder || holder instanceof RecipeGuiManager.ViewRecipeHolder) {
             event.setCancelled(true);
         }
     }
