@@ -82,6 +82,10 @@ public class DaggersPlugin extends JavaPlugin {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        if (command.getName().equalsIgnoreCase("drecipe")) {
+            return handleDrecipeCommand(sender, args);
+        }
+
         if (!command.getName().equalsIgnoreCase("dagger")) return false;
 
         if (!sender.hasPermission("customdaggers.admin")) {
@@ -94,13 +98,8 @@ public class DaggersPlugin extends JavaPlugin {
             return true;
         }
 
-        if (args.length == 1 && args[0].equalsIgnoreCase("recipe")) {
-            recipeGuiManager.openMainMenu(player);
-            return true;
-        }
-
         if (args.length != 1) {
-            player.sendMessage("§cUsage: /dagger <fire|ice|water|soul|darkness|backstab|recipe>");
+            player.sendMessage("§cUsage: /dagger <fire|ice|water|soul|darkness|backstab>");
             return true;
         }
 
@@ -108,12 +107,31 @@ public class DaggersPlugin extends JavaPlugin {
         try {
             type = DaggerType.valueOf(args[0].toUpperCase());
         } catch (IllegalArgumentException e) {
-            player.sendMessage("§cUnknown dagger. Choose: fire, ice, water, soul, darkness, backstab, recipe");
+            player.sendMessage("§cUnknown dagger. Choose: fire, ice, water, soul, darkness, backstab");
             return true;
         }
 
         player.getInventory().addItem(DaggerItem.create(type));
         player.sendMessage(type.getColor() + "You received the " + type.getDisplayName() + "!");
+        return true;
+    }
+
+    private boolean handleDrecipeCommand(CommandSender sender, String[] args) {
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can run this command.");
+            return true;
+        }
+
+        if (args.length >= 1 && args[0].equalsIgnoreCase("admin")) {
+            if (!player.hasPermission("customdaggers.admin")) {
+                player.sendMessage("§cYou don't have permission to use this command.");
+                return true;
+            }
+            recipeGuiManager.openAdminMainMenu(player);
+            return true;
+        }
+
+        recipeGuiManager.openViewMainMenu(player);
         return true;
     }
 }
