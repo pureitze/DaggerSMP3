@@ -98,7 +98,7 @@ public class DaggerItem {
                 case BACKSTAB -> List.of("§7Resistance II + Speed III, 8s §8(120s)");
                 case WIND -> List.of("§71.3x dmg (sprint/sweep/hit), 1.6x crit, 20s §8(120s)", "§7Double-tap sneak to dash 10 blocks (tier 2 passive)");
                 case ZEUS -> List.of("§7Lightning storm, 5 hearts §8(120s)");
-                case HEALTH -> List.of("§71.5x dmg (sprint/sweep/hit), 2.0x crit, 20s §8(120s)");
+                case HEALTH -> List.of("§71.3x dmg (sprint/sweep/hit), 1.8x crit, 5s §8(120s)");
             });
         }
 
