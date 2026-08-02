@@ -35,9 +35,9 @@ public class RecipeGuiManager {
 
     public void openViewMainMenu(Player player) {
         ViewMainMenuHolder holder = new ViewMainMenuHolder();
-        Inventory inv = Bukkit.createInventory(holder, 9, "§8Dagger Recipes");
+        Inventory inv = Bukkit.createInventory(holder, 18, "§8Dagger Recipes");
         holder.setInventory(inv);
-        fillGlass(inv, 9);
+        fillGlass(inv, 18);
 
         int slot = 0;
         for (DaggerType type : DaggerType.values()) {
