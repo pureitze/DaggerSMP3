@@ -45,8 +45,8 @@ public class RecipeGuiManager {
             slot++;
         }
 
-        // Slot 8 was unused glass filler in the 9-slot row; the Upgrader lives there now.
-        inv.setItem(8, UpgraderItem.create());
+        // Upgrader sits at the start of row two, clear of all 9 dagger slots (0-8).
+        inv.setItem(9, UpgraderItem.create());
 
         player.openInventory(inv);
     }
