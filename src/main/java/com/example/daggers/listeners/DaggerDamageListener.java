@@ -202,7 +202,7 @@ public class DaggerDamageListener implements Listener {
 
     private double handleHealthDagger(Player player, LivingEntity target, boolean isCrit) {
         if (tier2BuffManager.hasBuff(player, DaggerType.HEALTH)) {
-            return isCrit ? 2.0 : 1.5;
+            return isCrit ? 1.8 : 1.3;
         }
 
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
