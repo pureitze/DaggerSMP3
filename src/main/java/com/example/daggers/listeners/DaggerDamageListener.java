@@ -99,11 +99,11 @@ public class DaggerDamageListener implements Listener {
         target.setFireTicks(Math.max(target.getFireTicks(), 100));
 
         if (tier2BuffManager.hasBuff(player, DaggerType.FIRE)) {
-            return isCrit ? 2.0 : 1.5;
+            return isCrit ? 1.8 : 1.3;
         }
         if (player.getFireTicks() > 0) {
-            if (isCrit) return 1.8;
-            if (isSweep || isSprint) return 1.3;
+            if (isCrit) return 1.6;
+            if (isSweep || isSprint) return 1.2;
         }
         return 1.0;
     }
@@ -112,11 +112,11 @@ public class DaggerDamageListener implements Listener {
         boolean onIce = isStandingOnIce(player);
 
         if (tier2BuffManager.hasBuff(player, DaggerType.ICE) && onIce) {
-            return isCrit ? 2.0 : 1.5;
+            return isCrit ? 1.8 : 1.3;
         }
         if (onIce) {
-            if (isCrit) return 1.8;
-            if (isSweep || isSprint) return 1.3;
+            if (isCrit) return 1.6;
+            if (isSweep || isSprint) return 1.2;
         }
         return 1.0;
     }
@@ -150,18 +150,18 @@ public class DaggerDamageListener implements Listener {
 
     private double handleDarknessDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         if (tier2BuffManager.hasBuff(player, DaggerType.DARKNESS)) {
-            return isCrit ? 2.0 : 1.5;
+            return isCrit ? 1.6 : 1.2;
         }
 
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
         double multiplier = 1.0;
 
         if (hits % 5 == 0) {
-            multiplier = isCrit ? 1.8 : 1.5;
+            multiplier = isCrit ? 1.8 : 1.3;
         }
 
         if (hits % 10 == 0) {
-            damageArmorDurability(target, 25);
+            damageArmorDurability(target, 35);
         }
 
         return multiplier;
@@ -170,10 +170,10 @@ public class DaggerDamageListener implements Listener {
     private double handleBackstabDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         if (isBackstab(player, target)) {
             target.getWorld().playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.6f);
-            return isCrit ? 2.0 : 1.8;
+            return isCrit ? 1.8 : 1.3;
         }
-        if (isCrit) return 1.5;
-        if (isSweep || isSprint) return 1.3;
+        if (isCrit) return 1.6;
+        if (isSweep || isSprint) return 1.2;
         return 1.3;
     }
 
@@ -189,7 +189,7 @@ public class DaggerDamageListener implements Listener {
         double multiplier = 1.0;
 
         if (storming) {
-            multiplier = isCrit ? 1.8 : 1.3;
+            multiplier = isCrit ? 1.6 : 1.2;
         }
 
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
@@ -202,7 +202,7 @@ public class DaggerDamageListener implements Listener {
 
     private double handleHealthDagger(Player player, LivingEntity target, boolean isCrit) {
         if (tier2BuffManager.hasBuff(player, DaggerType.HEALTH)) {
-            return isCrit ? 1.8 : 1.3;
+            return isCrit ? 1.6 : 1.2;
         }
 
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
