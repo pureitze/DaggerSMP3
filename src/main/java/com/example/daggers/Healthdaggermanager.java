@@ -44,7 +44,7 @@ public class HealthDaggerManager {
     }
 
     private void syncPassive(Player player, boolean holding) {
-        AttributeInstance attr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr == null) return;
 
         boolean hasModifier = attr.getModifiers().stream()
@@ -66,7 +66,7 @@ public class HealthDaggerManager {
 
     /** Called from DaggerAbilityListener for the shift+right-click ability. */
     public void activateBoost(Player player, long durationMillis) {
-        AttributeInstance attr = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+        AttributeInstance attr = player.getAttribute(Attribute.MAX_HEALTH);
         if (attr == null) return;
 
         boolean already = attr.getModifiers().stream()
@@ -79,7 +79,7 @@ public class HealthDaggerManager {
         }
 
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
-            AttributeInstance a = player.getAttribute(Attribute.GENERIC_MAX_HEALTH);
+            AttributeInstance a = player.getAttribute(Attribute.MAX_HEALTH);
             if (a == null) return;
             a.getModifiers().stream()
                     .filter(m -> m.getUniqueId().equals(BOOST_MODIFIER_ID))
