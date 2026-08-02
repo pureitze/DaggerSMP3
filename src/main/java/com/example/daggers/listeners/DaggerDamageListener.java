@@ -4,6 +4,7 @@ import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
 import com.example.daggers.HitTracker;
 import com.example.daggers.NoSprintManager;
+import com.example.daggers.Tier2BuffManager;
 import org.bukkit.Material;
 import org.bukkit.Sound;
 import org.bukkit.attribute.Attribute;
@@ -28,19 +29,22 @@ import java.util.UUID;
 
 public class DaggerDamageListener implements Listener {
 
-    // Players who used a right-click "curse my next hit" ability and are
-    // waiting to land it. Shared with DaggerAbilityListener.
     private final Set<UUID> pendingSoulCurse;
     private final Set<UUID> pendingDarknessCurse;
     private final HitTracker hitTracker;
     private final NoSprintManager noSprintManager;
+    private final Tier2BuffManager tier2BuffManager;
+    private final DaggerAbilityListener abilityListener;
 
     public DaggerDamageListener(Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse, HitTracker hitTracker,
-                                 NoSprintManager noSprintManager) {
+                                 NoSprintManager noSprintManager, Tier2BuffManager tier2BuffManager,
+                                 DaggerAbilityListener abilityListener) {
         this.pendingSoulCurse = pendingSoulCurse;
         this.pendingDarknessCurse = pendingDarknessCurse;
         this.hitTracker = hitTracker;
         this.noSprintManager = noSprintManager;
+        this.tier2BuffManager = tier2BuffManager;
+        this.abilityListener = abilityListener;
     }
 
     @EventHandler(priority = EventPriority.HIGH)
@@ -61,7 +65,7 @@ public class DaggerDamageListener implements Listener {
             case ICE -> handleIceDagger(attacker, isCrit, isSweep, isSprint);
             case WATER -> handleWaterDagger(attacker);
             case SOUL -> handleSoulDagger(attacker, target, isCrit);
-            case DARKNESS -> handleDarknessDagger(attacker, target, isCrit);
+            case DARKNESS -> handleDarknessDagger(attacker, target, isCrit, isSweep, isSprint);
             case BACKSTAB -> handleBackstabDagger(attacker, target, isCrit, isSweep, isSprint);
         };
 
@@ -69,23 +73,31 @@ public class DaggerDamageListener implements Listener {
             event.setDamage(event.getDamage() * multiplier);
         }
 
-        // Apply any pending "next hit is cursed" effects
         if (pendingSoulCurse.remove(attacker.getUniqueId())) {
-            target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 0));    // 3s
-            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1)); // 5s, Slowness II
+            target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 60, 0));
+            target.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, 100, 1));
         }
-  if (pendingDarknessCurse.remove(attacker.getUniqueId())) {
-            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0)); // 6s
+        if (pendingDarknessCurse.remove(attacker.getUniqueId())) {
+            target.addPotionEffect(new PotionEffect(PotionEffectType.DARKNESS, 120, 0));
             if (target instanceof Player targetPlayer) {
-                noSprintManager.disableSprint(targetPlayer, 120); // matches the 6s darkness duration
+                noSprintManager.disableSprint(targetPlayer, 120);
             }
         }
+
+        // Soul Dagger Tier 2: one-time bonus hit, consumed here
+        if (abilityListener.consumeSoulTier2(attacker.getUniqueId())) {
+            target.setHealth(Math.max(0, target.getHealth() - 6.0)); // 3 hearts, true damage
+            target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 0)); // 5s
+        }
     }
+
     private double handleFireDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
-        // Base ability: every hit sets the target on fire (5 seconds)
         target.setFireTicks(Math.max(target.getFireTicks(), 100));
 
-        // Bonus damage only while the attacker themself is burning
+        if (tier2BuffManager.hasBuff(attacker, DaggerType.FIRE)) {
+            return isCrit ? 2.0 : 1.5;
+        }
+
         if (attacker.getFireTicks() > 0) {
             if (isCrit) return 1.8;
             if (isSweep || isSprint) return 1.3;
@@ -94,7 +106,13 @@ public class DaggerDamageListener implements Listener {
     }
 
     private double handleIceDagger(Player attacker, boolean isCrit, boolean isSweep, boolean isSprint) {
-        if (isStandingOnIce(attacker)) {
+        boolean onIce = isStandingOnIce(attacker);
+
+        if (tier2BuffManager.hasBuff(attacker, DaggerType.ICE) && onIce) {
+            return isCrit ? 2.0 : 1.5;
+        }
+
+        if (onIce) {
             if (isCrit) return 1.8;
             if (isSweep || isSprint) return 1.3;
         }
@@ -102,8 +120,9 @@ public class DaggerDamageListener implements Listener {
     }
 
     private double handleWaterDagger(Player attacker) {
-        // Water dagger boosts sprint, sweep, AND regular hits equally, so we
-        // don't even need to distinguish attack type here - just "in water".
+        if (tier2BuffManager.hasBuff(attacker, DaggerType.WATER)) {
+            return 1.8;
+        }
         return attacker.isInWater() ? 1.5 : 1.0;
     }
 
@@ -116,20 +135,21 @@ public class DaggerDamageListener implements Listener {
         }
 
         if (hitCount % 10 == 0) {
-            double stolenHealth = 3.0; // 1.5 hearts = 3 HP (1 heart = 2 HP)
-
+            double stolenHealth = 3.0;
             target.setHealth(Math.max(0, target.getHealth() - stolenHealth));
-
             double maxHealth = attacker.getAttribute(Attribute.MAX_HEALTH).getValue();
             attacker.setHealth(Math.min(maxHealth, attacker.getHealth() + stolenHealth));
-
-            attacker.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 2)); // Regen III, 2s
+            attacker.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 2));
         }
 
         return multiplier;
     }
 
-    private double handleDarknessDagger(Player attacker, LivingEntity target, boolean isCrit) {
+    private double handleDarknessDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
+        if (tier2BuffManager.hasBuff(attacker, DaggerType.DARKNESS)) {
+            return isCrit ? 2.0 : 1.5;
+        }
+
         int hitCount = hitTracker.recordHit(attacker.getUniqueId(), target.getUniqueId());
         double multiplier = 1.0;
 
@@ -147,11 +167,11 @@ public class DaggerDamageListener implements Listener {
     private double handleBackstabDagger(Player attacker, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         if (isBackstab(attacker, target)) {
             target.getWorld().playSound(target.getLocation(), Sound.ENTITY_PLAYER_ATTACK_CRIT, 1.0f, 0.7f);
-            return isCrit ? 2.5 : 2.1;
+            return isCrit ? 2.0 : 1.8;
         }
-        if (isCrit) return 1.8;
-        if (isSweep || isSprint) return 1.3;
-        return 1.0;
+        if (isCrit) return 1.5;
+        if (isSweep || isSprint) return 1.2;
+        return 1.2;
     }
 
     private boolean isStandingOnIce(Player player) {
@@ -161,12 +181,6 @@ public class DaggerDamageListener implements Listener {
                 || type == Material.BLUE_ICE || type == Material.FROSTED_ICE;
     }
 
-    /**
-     * Approximates vanilla's critical-hit condition using public API only:
-     * falling, airborne, not sprinting, no blindness. This isn't pixel-perfect
-     * (exact vanilla crit logic lives server-side and isn't exposed by Bukkit),
-     * but it's the same approximation most plugins use and feels right in practice.
-     */
     private boolean isApproximateCrit(Player attacker) {
         return attacker.getFallDistance() > 0f
                 && !attacker.isOnGround()
@@ -175,12 +189,6 @@ public class DaggerDamageListener implements Listener {
                 && !attacker.hasPotionEffect(PotionEffectType.BLINDNESS);
     }
 
-    /**
-     * A "backstab" is any hit landed while the target is facing roughly away
-     * from the attacker - specifically, the attacker is within a ~120-degree
-     * cone directly behind the target's facing direction. Bukkit has no
-     * built-in concept of this, so this is a reasonable geometric approximation.
-     */
     private boolean isBackstab(Player attacker, LivingEntity target) {
         Vector targetFacing = target.getLocation().getDirection().setY(0).normalize();
         Vector targetToAttacker = attacker.getLocation().toVector()
@@ -191,8 +199,6 @@ public class DaggerDamageListener implements Listener {
         targetToAttacker.normalize();
 
         double dot = targetFacing.dot(targetToAttacker);
-        // dot == -1 means the attacker is directly behind the target's facing
-        // direction. -0.5 gives roughly a 120-degree cone behind the target.
         return dot < -0.5;
     }
 
@@ -209,7 +215,7 @@ public class DaggerDamageListener implements Listener {
             if (meta instanceof Damageable damageable) {
                 int newDamage = damageable.getDamage() + amount;
                 if (newDamage >= piece.getType().getMaxDurability()) {
-                    armor[i] = null; // the piece breaks
+                    armor[i] = null;
                 } else {
                     damageable.setDamage(newDamage);
                     piece.setItemMeta((ItemMeta) damageable);
