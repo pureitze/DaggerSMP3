@@ -55,13 +55,16 @@ public class DaggerAbilityListener implements Listener {
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return; // ignore the paired off-hand copy of this event
 
         Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItemInMainHand();
         DaggerType type = DaggerItem.getType(item);
         if (type == null) return;
 
-        event.setCancelled(true); // don't place blocks / open containers while using the ability
+        if (!player.isSneaking()) return; // plain right-click: do nothing, let off-hand item use proceed normally
+
+        event.setCancelled(true); // only cancel (and use the ability) on Shift + right-click
 
         if (cooldowns.isOnCooldown(player.getUniqueId(), type)) {
             long remaining = cooldowns.getRemainingSeconds(player.getUniqueId(), type);
