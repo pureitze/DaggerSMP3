@@ -30,7 +30,7 @@ public class RecipeGuiListener implements Listener {
             event.setCancelled(true);
             int rawSlot = event.getRawSlot();
 
-            if (rawSlot == 8) {
+            if (rawSlot == 9) {
                 guiManager.openUpgraderRecipe(player);
                 return;
             }
