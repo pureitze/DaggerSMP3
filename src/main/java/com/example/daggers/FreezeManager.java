@@ -24,7 +24,6 @@ public class FreezeManager {
     }, ticks);
 }
     }
-
     public boolean isFrozen(Player player) {
         return frozenPlayers.contains(player.getUniqueId());
     }
