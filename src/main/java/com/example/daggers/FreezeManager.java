@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.UUID;
 
 public class FreezeManager {
+
     private final Set<UUID> frozenPlayers = new HashSet<>();
     private final JavaPlugin plugin;
 
@@ -17,13 +18,14 @@ public class FreezeManager {
     }
 
     public void freeze(Player player, long durationMillis) {
-    frozenPlayers.add(player.getUniqueId());
-    long ticks = durationMillis / 50L; // 1 tick = 50ms
-    Bukkit.getScheduler().runTaskLater(plugin, () -> {
-        frozenPlayers.remove(player.getUniqueId());
-    }, ticks);
-}
+        frozenPlayers.add(player.getUniqueId());
+
+        long ticks = durationMillis / 50L; // 1 tick = 50ms
+        Bukkit.getScheduler().runTaskLater(plugin, () -> {
+            frozenPlayers.remove(player.getUniqueId());
+        }, ticks);
     }
+
     public boolean isFrozen(Player player) {
         return frozenPlayers.contains(player.getUniqueId());
     }
