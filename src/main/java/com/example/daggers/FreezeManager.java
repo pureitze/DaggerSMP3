@@ -16,12 +16,13 @@ public class FreezeManager {
         this.plugin = plugin;
     }
 
-    public void freeze(Player player, long durationTicks) {
-        UUID id = player.getUniqueId();
-        frozenPlayers.add(id);
-
-        // Automatically unfreeze after the duration
-        Bukkit.getScheduler().runTaskLater(plugin, () -> frozenPlayers.remove(id), durationTicks);
+    public void freeze(Player player, long durationMillis) {
+    frozenPlayers.add(player.getUniqueId());
+    long ticks = durationMillis / 50L; // 1 tick = 50ms
+    Bukkit.getScheduler().runTaskLater(plugin, () -> {
+        frozenPlayers.remove(player.getUniqueId());
+    }, ticks);
+}
     }
 
     public boolean isFrozen(Player player) {
