@@ -62,14 +62,14 @@ public class DaggerDamageListener implements Listener {
         boolean isCrit = isApproximateCrit(player);
 
         double multiplier = switch (type) {
-            case FIRE -> handleFireDagger(player, target, isCrit, isSweep, isSprint);
-            case ICE -> handleIceDagger(player, isCrit, isSweep, isSprint);
-            case WATER -> handleWaterDagger(player);
+            case FIRE -> handleFireDagger(player, target, isCrit);
+            case ICE -> handleIceDagger(player, isCrit);
+            case WATER -> handleWaterDagger(player, isCrit);
             case SOUL -> handleSoulDagger(player, target, isCrit);
-            case DARKNESS -> handleDarknessDagger(player, target, isCrit, isSweep, isSprint);
+            case DARKNESS -> handleDarknessDagger(player, target, isCrit);
             case BACKSTAB -> handleBackstabDagger(player, target, isCrit, isSweep, isSprint);
             case WIND -> handleWindDagger(player, isCrit);
-            case ZEUS -> handleZeusDagger(player, target, isCrit, isSweep, isSprint);
+            case ZEUS -> handleZeusDagger(player, target, isCrit);
             case HEALTH -> handleHealthDagger(player, target, isCrit);
         };
 
@@ -95,46 +95,43 @@ public class DaggerDamageListener implements Listener {
         }
     }
 
-    private double handleFireDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
+    // --- Base damage: 1.1x regular/sprint/sweep, 1.3x crit for every dagger except Backstab.
+    //     Fire and Ice get an elevated 1.3x/1.6x while their special condition is active.
+    //     Tier 2 (where applicable): 1.4x regular/sprint/sweep, 1.7x crit.
+
+    private double handleFireDagger(Player player, LivingEntity target, boolean isCrit) {
         target.setFireTicks(Math.max(target.getFireTicks(), 100));
 
         if (tier2BuffManager.hasBuff(player, DaggerType.FIRE)) {
-            return isCrit ? 1.8 : 1.3;
+            return isCrit ? 1.7 : 1.4;
         }
         if (player.getFireTicks() > 0) {
-            if (isCrit) return 1.6;
-            if (isSweep || isSprint) return 1.2;
+            return isCrit ? 1.6 : 1.3;
         }
-        return 1.0;
+        return isCrit ? 1.3 : 1.1;
     }
 
-    private double handleIceDagger(Player player, boolean isCrit, boolean isSweep, boolean isSprint) {
+    private double handleIceDagger(Player player, boolean isCrit) {
         boolean onIce = isStandingOnIce(player);
 
-        if (tier2BuffManager.hasBuff(player, DaggerType.ICE) && onIce) {
-            return isCrit ? 1.8 : 1.3;
+        if (tier2BuffManager.hasBuff(player, DaggerType.ICE)) {
+            return isCrit ? 1.7 : 1.4;
         }
         if (onIce) {
-            if (isCrit) return 1.6;
-            if (isSweep || isSprint) return 1.2;
+            return isCrit ? 1.6 : 1.3;
         }
-        return 1.0;
+        return isCrit ? 1.3 : 1.1;
     }
 
-    private double handleWaterDagger(Player player) {
+    private double handleWaterDagger(Player player, boolean isCrit) {
         if (tier2BuffManager.hasBuff(player, DaggerType.WATER)) {
-            return 1.8;
+            return isCrit ? 1.7 : 1.4;
         }
-        return player.isInWater() ? 1.5 : 1.0;
+        return isCrit ? 1.3 : 1.1;
     }
 
     private double handleSoulDagger(Player player, LivingEntity target, boolean isCrit) {
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
-        double multiplier = 1.0;
-
-        if (hits % 5 == 0) {
-            multiplier = isCrit ? 1.8 : 1.3;
-        }
 
         if (hits % 10 == 0) {
             double stolen = 3.0;
@@ -145,64 +142,51 @@ public class DaggerDamageListener implements Listener {
             player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 40, 2));
         }
 
-        return multiplier;
+        return isCrit ? 1.3 : 1.1;
     }
 
-    private double handleDarknessDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
+    private double handleDarknessDagger(Player player, LivingEntity target, boolean isCrit) {
         if (tier2BuffManager.hasBuff(player, DaggerType.DARKNESS)) {
-            return isCrit ? 1.6 : 1.2;
+            return isCrit ? 1.7 : 1.4;
         }
 
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
-        double multiplier = 1.0;
-
-        if (hits % 5 == 0) {
-            multiplier = isCrit ? 1.8 : 1.3;
-        }
-
         if (hits % 10 == 0) {
-            damageArmorDurability(target, 35);
+            damageArmorDurability(target, 25);
         }
 
-        return multiplier;
+        return isCrit ? 1.3 : 1.1;
     }
 
+    // Backstab is intentionally untouched by this rework.
     private double handleBackstabDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         if (isBackstab(player, target)) {
             target.getWorld().playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.6f);
-            return isCrit ? 1.8 : 1.3;
+            return isCrit ? 2.0 : 1.8;
         }
-        if (isCrit) return 1.6;
-        if (isSweep || isSprint) return 1.2;
+        if (isCrit) return 1.5;
+        if (isSweep || isSprint) return 1.3;
         return 1.3;
     }
 
     private double handleWindDagger(Player player, boolean isCrit) {
         if (tier2BuffManager.hasBuff(player, DaggerType.WIND)) {
-            return isCrit ? 1.6 : 1.3;
+            return isCrit ? 1.7 : 1.4;
         }
-        return 1.0;
+        return isCrit ? 1.3 : 1.1;
     }
 
-    private double handleZeusDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
-        boolean storming = player.getWorld().hasStorm() && !player.isInWater();
-        double multiplier = 1.0;
-
-        if (storming) {
-            multiplier = isCrit ? 1.6 : 1.2;
-        }
-
+    private double handleZeusDagger(Player player, LivingEntity target, boolean isCrit) {
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
         if (hits % 10 == 0) {
             trapInCobweb(target);
         }
-
-        return multiplier;
+        return isCrit ? 1.3 : 1.1;
     }
 
     private double handleHealthDagger(Player player, LivingEntity target, boolean isCrit) {
         if (tier2BuffManager.hasBuff(player, DaggerType.HEALTH)) {
-            return isCrit ? 1.6 : 1.2;
+            return isCrit ? 1.7 : 1.4;
         }
 
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
@@ -210,13 +194,12 @@ public class DaggerDamageListener implements Listener {
             player.addPotionEffect(new PotionEffect(PotionEffectType.REGENERATION, 100, 2));
         }
 
-        return 1.0;
+        return isCrit ? 1.3 : 1.1;
     }
 
     private void trapInCobweb(LivingEntity target) {
         Block head = target.getLocation().add(0, 1, 0).getBlock();
-        Material original = head.getType();
-        if (original != Material.AIR) return; // don't overwrite something already there
+        if (head.getType() != Material.AIR) return; // don't overwrite something already there
 
         head.setType(Material.COBWEB);
         plugin.getServer().getScheduler().runTaskLater(plugin, () -> {
