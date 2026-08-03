@@ -209,7 +209,7 @@ public class DaggerAbilityListener implements Listener {
 
         Location loc = target.getLocation();
         loc.getWorld().strikeLightningEffect(loc); // visual + sound only, no vanilla fire/damage
-        target.setHealth(Math.max(0, target.getHealth() - 5.0)); // 2.5 hearts, true damage
+        target.setHealth(Math.max(0, target.getHealth() - 4.0)); // 2 hearts, true damage
         player.sendMessage("§eYou call down a lightning strike!");
         return true;
     }
@@ -331,7 +331,7 @@ public class DaggerAbilityListener implements Listener {
 
         for (Entity nearby : center.getWorld().getNearbyEntities(center, 4, 4, 4)) {
             if (nearby instanceof Player p && !p.equals(player)) {
-                p.setHealth(Math.max(0, p.getHealth() - 10.0)); // 5 hearts, true damage
+                p.setHealth(Math.max(0, p.getHealth() - 8.0)); // 4 hearts, true damage
             }
         }
         player.sendMessage("§e§lYou summon a lightning storm!");
