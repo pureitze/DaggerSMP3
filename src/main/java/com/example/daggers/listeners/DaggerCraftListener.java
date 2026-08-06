@@ -206,7 +206,7 @@ public class DaggerCraftListener implements Listener {
             Transformation transformation = new Transformation(
                     new Vector3f(0f, 0f, 0f),
                     new AxisAngle4f(0f, 0f, 0f, 1f),
-                    new Vector3f(0.35f, height / 16f, 0.35f),
+                    new Vector3f(1.0f, height / 16f, 1.0f),
                     new AxisAngle4f(0f, 0f, 0f, 1f)
             );
             display.setTransformation(transformation);
