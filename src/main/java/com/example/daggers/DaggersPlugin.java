@@ -1,6 +1,7 @@
 package com.example.daggers;
 
 import com.example.daggers.listeners.DaggerAbilityListener;
+import com.example.daggers.listeners.DaggerCraftListener;
 import com.example.daggers.listeners.DaggerDamageListener;
 import com.example.daggers.listeners.FreezeMovementListener;
 import com.example.daggers.listeners.NoSprintListener;
@@ -72,6 +73,7 @@ public class DaggersPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new NoSprintListener(noSprintManager), this);
         getServer().getPluginManager().registerEvents(new UpgraderListener(), this);
         getServer().getPluginManager().registerEvents(windAbilityListener, this);
+        getServer().getPluginManager().registerEvents(new DaggerCraftListener(this), this);
 
         registerUpgraderRecipe();
 
