@@ -4,12 +4,13 @@ import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
-import org.bukkit.Particle;
+import org.bukkit.Material;
 import org.bukkit.Sound;
-import org.bukkit.block.Block;
 import org.bukkit.boss.BarColor;
 import org.bukkit.boss.BarStyle;
 import org.bukkit.boss.BossBar;
+import org.bukkit.entity.Display;
+import org.bukkit.entity.ItemDisplay;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -17,11 +18,15 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
-import org.bukkit.inventory.CraftingInventory;
+import org.bukkit.event.inventory.CraftingInventory;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.scheduler.BukkitRunnable;
+import org.bukkit.util.Transformation;
+import org.joml.AxisAngle4f;
+import org.joml.Vector3f;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -32,13 +37,16 @@ import java.util.concurrent.ConcurrentHashMap;
  * Announces every dagger craft in chat. The FIRST craft of EACH dagger type
  * (tracked independently per type) gets special treatment instead of the normal
  * announcement: the crafting table it was made on becomes unbreakable (including
- * against explosions) for 8 minutes, grows a particle beam out of the top, and
- * shows a Wither-style boss bar with the dagger's name and coordinates. When the
- * timer ends, the table becomes breakable again and the dagger drops on top of it.
+ * against explosions) for 8 minutes, grows a tall glowing beam (a stretched
+ * ItemDisplay entity - NOT particles, NOT a real beacon) extending 250 blocks up
+ * and 250 blocks down, and shows a Wither-style boss bar with the dagger's name
+ * and coordinates. When the timer ends, the beam disappears, the table becomes
+ * breakable again, and the dagger drops on top of it.
  */
 public class DaggerCraftListener implements Listener {
 
     private static final long FIRST_DAGGER_DELAY_TICKS = 8 * 60 * 20L; // 8 minutes
+    private static final float BEAM_REACH = 250f; // blocks up AND down
 
     private final JavaPlugin plugin;
     private final Set<DaggerType> firstCraftedTypes;
@@ -139,11 +147,10 @@ public class DaggerCraftListener implements Listener {
         }
         activeBars.put(type, bar);
 
+        ItemDisplay beam = spawnBeam(beamOrigin, type);
+
         Bukkit.broadcastMessage("§5§lThe first " + type.getColor() + type.getDisplayName() + "§5§l has been forged by "
                 + player.getName() + " at " + coords + "! Its altar hums with power...");
-
-        Particle.DustOptions dustOptions = new Particle.DustOptions(
-                org.bukkit.Color.fromRGB(colorFromType(type)), 1.2f);
 
         new BukkitRunnable() {
             long elapsedTicks = 0L;
@@ -160,6 +167,9 @@ public class DaggerCraftListener implements Listener {
                     if (tableLoc != null) {
                         protectedAltars.remove(tableLoc);
                     }
+                    if (!beam.isDead()) {
+                        beam.remove();
+                    }
 
                     Location dropLoc = beamOrigin.clone().add(0.5, 1.05, 0.5);
                     dropLoc.getWorld().dropItem(dropLoc, DaggerItem.create(type));
@@ -172,29 +182,56 @@ public class DaggerCraftListener implements Listener {
                 }
 
                 bar.setProgress(progress);
-                spawnBeamTick(beamOrigin, dustOptions);
             }
         }.runTaskTimer(plugin, 20L, 20L);
     }
 
-    private void spawnBeamTick(Location origin, Particle.DustOptions dustOptions) {
-        Location base = origin.clone().add(0.5, 1.0, 0.5);
-        for (double y = 0; y < 12; y += 0.5) {
-            base.getWorld().spawnParticle(Particle.DUST, base.clone().add(0, y, 0), 1, 0, 0, 0, 0, dustOptions);
-        }
+    /**
+     * Spawns a single stretched ItemDisplay entity that reads as a tall glowing
+     * beam reaching BEAM_REACH blocks up and BEAM_REACH blocks down from the
+     * table. This is a real entity, not a particle effect and not a vanilla
+     * beacon - so it isn't hidden by particle settings and isn't limited to
+     * pointing only upward or needing sky access / a mineral pyramid.
+     */
+    private ItemDisplay spawnBeam(Location tableLoc, DaggerType type) {
+        Location spawnAt = tableLoc.clone().add(0.5, 1.0 - BEAM_REACH, 0.5);
+
+        return spawnAt.getWorld().spawn(spawnAt, ItemDisplay.class, display -> {
+            display.setItemStack(createBeamItem(type));
+            display.setBillboard(Display.Billboard.FIXED);
+            display.setBrightness(new Display.Brightness(15, 15));
+            display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+
+            float height = BEAM_REACH * 2f; // total span, in multiples of the model's 16-unit height
+            Transformation transformation = new Transformation(
+                    new Vector3f(0f, 0f, 0f),
+                    new AxisAngle4f(0f, 0f, 0f, 1f),
+                    new Vector3f(0.35f, height / 16f, 0.35f),
+                    new AxisAngle4f(0f, 0f, 0f, 1f)
+            );
+            display.setTransformation(transformation);
+        });
     }
 
-    private int colorFromType(DaggerType type) {
+    private ItemStack createBeamItem(DaggerType type) {
+        ItemStack item = new ItemStack(Material.PAPER);
+        ItemMeta meta = item.getItemMeta();
+        meta.setCustomModelData(beamModelData(type));
+        item.setItemMeta(meta);
+        return item;
+    }
+
+    private int beamModelData(DaggerType type) {
         return switch (type) {
-            case FIRE -> 0xFF5A28;
-            case ICE -> 0x6EDCFF;
-            case WATER -> 0x3C8CFF;
-            case SOUL -> 0xBE50FF;
-            case DARKNESS -> 0x6E6E78;
-            case BACKSTAB -> 0xC81919;
-            case WIND -> 0xE1E1E6;
-            case ZEUS -> 0xFFDC3C;
-            case HEALTH -> 0x50E664;
+            case FIRE -> 5001;
+            case ICE -> 5002;
+            case WATER -> 5003;
+            case SOUL -> 5004;
+            case DARKNESS -> 5005;
+            case BACKSTAB -> 5006;
+            case WIND -> 5007;
+            case ZEUS -> 5008;
+            case HEALTH -> 5009;
         };
     }
 
