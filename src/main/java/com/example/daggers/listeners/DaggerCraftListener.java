@@ -17,7 +17,7 @@ import org.bukkit.event.block.BlockBreakEvent;
 import org.bukkit.event.block.BlockExplodeEvent;
 import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.inventory.CraftItemEvent;
-import org.bukkit.event.inventory.CraftingInventory;
+import org.bukkit.inventory.CraftingInventory;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
@@ -132,7 +132,7 @@ public class DaggerCraftListener implements Listener {
         String coords = formatCoords(beamOrigin);
         String title = type.getColor() + type.getDisplayName() + " §7- " + coords;
 
-        BossBar bar = Bukkit.createBossBar(title, BarColor.PURPLE, BarStyle.NOTCHED_10);
+        BossBar bar = Bukkit.createBossBar(title, BarColor.PURPLE, BarStyle.SEGMENTED_10);
         bar.setProgress(1.0);
         for (Player online : Bukkit.getOnlinePlayers()) {
             bar.addPlayer(online);
