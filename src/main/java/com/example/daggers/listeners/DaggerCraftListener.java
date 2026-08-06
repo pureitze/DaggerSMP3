@@ -147,7 +147,7 @@ public class DaggerCraftListener implements Listener {
         }
         activeBars.put(type, bar);
 
-        ItemDisplay beam = spawnBeam(beamOrigin, type);
+        List<ItemDisplay> beam = spawnBeam(beamOrigin, type);
 
         Bukkit.broadcastMessage("§5§lThe first " + type.getColor() + type.getDisplayName() + "§5§l has been forged by "
                 + player.getName() + " at " + coords + "! Its altar hums with power...");
@@ -167,8 +167,10 @@ public class DaggerCraftListener implements Listener {
                     if (tableLoc != null) {
                         protectedAltars.remove(tableLoc);
                     }
-                    if (!beam.isDead()) {
-                        beam.remove();
+                    for (ItemDisplay segment : beam) {
+                        if (!segment.isDead()) {
+                            segment.remove();
+                        }
                     }
 
                     Location dropLoc = beamOrigin.clone().add(0.5, 1.05, 0.5);
@@ -193,7 +195,9 @@ public class DaggerCraftListener implements Listener {
      * beacon - so it isn't hidden by particle settings and isn't limited to
      * pointing only upward or needing sky access / a mineral pyramid.
      */
-    private ItemDisplay spawnBeam(Location tableLoc, DaggerType type) {
+    private static final double BEAM_SEGMENT_HEIGHT = 24.0; // blocks per segment - modest stretch, avoids culling issues
+
+    private List<ItemDisplay> spawnBeam(Location tableLoc, DaggerType type) {
         var world = tableLoc.getWorld();
         double minY = world.getMinHeight();
         double maxY = world.getMaxHeight();
@@ -201,24 +205,37 @@ public class DaggerCraftListener implements Listener {
         // Reach as far as BEAM_REACH in each direction, but never past what the world actually has.
         double bottom = Math.max(minY, tableLoc.getY() - BEAM_REACH);
         double top = Math.min(maxY, tableLoc.getY() + 1.0 + BEAM_REACH);
-        double height = top - bottom;
+        double totalHeight = top - bottom;
 
-        Location spawnAt = new Location(world, tableLoc.getX() + 0.5, bottom, tableLoc.getZ() + 0.5);
+        List<ItemDisplay> segments = new java.util.ArrayList<>();
+        ItemStack beamItem = createBeamItem(type);
 
-        return world.spawn(spawnAt, ItemDisplay.class, display -> {
-            display.setItemStack(createBeamItem(type));
-            display.setBillboard(Display.Billboard.FIXED);
-            display.setBrightness(new Display.Brightness(15, 15));
-            display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+        double y = bottom;
+        while (y < top) {
+            double segmentHeight = Math.min(BEAM_SEGMENT_HEIGHT, top - y);
+            Location spawnAt = new Location(world, tableLoc.getX() + 0.5, y, tableLoc.getZ() + 0.5);
+            double finalSegmentHeight = segmentHeight;
 
-            Transformation transformation = new Transformation(
-                    new Vector3f(0f, 0f, 0f),
-                    new AxisAngle4f(0f, 0f, 0f, 1f),
-                    new Vector3f(1.0f, (float) (height / 16.0), 1.0f),
-                    new AxisAngle4f(0f, 0f, 0f, 1f)
-            );
-            display.setTransformation(transformation);
-        });
+            ItemDisplay segment = world.spawn(spawnAt, ItemDisplay.class, display -> {
+                display.setItemStack(beamItem);
+                display.setBillboard(Display.Billboard.FIXED);
+                display.setBrightness(new Display.Brightness(15, 15));
+                display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
+
+                Transformation transformation = new Transformation(
+                        new Vector3f(0f, 0f, 0f),
+                        new AxisAngle4f(0f, 0f, 0f, 1f),
+                        new Vector3f(1.0f, (float) (finalSegmentHeight / 16.0), 1.0f),
+                        new AxisAngle4f(0f, 0f, 0f, 1f)
+                );
+                display.setTransformation(transformation);
+            });
+
+            segments.add(segment);
+            y += BEAM_SEGMENT_HEIGHT;
+        }
+
+        return segments;
     }
 
     private ItemStack createBeamItem(DaggerType type) {
