@@ -194,19 +194,27 @@ public class DaggerCraftListener implements Listener {
      * pointing only upward or needing sky access / a mineral pyramid.
      */
     private ItemDisplay spawnBeam(Location tableLoc, DaggerType type) {
-        Location spawnAt = tableLoc.clone().add(0.5, 1.0 - BEAM_REACH, 0.5);
+        var world = tableLoc.getWorld();
+        double minY = world.getMinHeight();
+        double maxY = world.getMaxHeight();
 
-        return spawnAt.getWorld().spawn(spawnAt, ItemDisplay.class, display -> {
+        // Reach as far as BEAM_REACH in each direction, but never past what the world actually has.
+        double bottom = Math.max(minY, tableLoc.getY() - BEAM_REACH);
+        double top = Math.min(maxY, tableLoc.getY() + 1.0 + BEAM_REACH);
+        double height = top - bottom;
+
+        Location spawnAt = new Location(world, tableLoc.getX() + 0.5, bottom, tableLoc.getZ() + 0.5);
+
+        return world.spawn(spawnAt, ItemDisplay.class, display -> {
             display.setItemStack(createBeamItem(type));
             display.setBillboard(Display.Billboard.FIXED);
             display.setBrightness(new Display.Brightness(15, 15));
             display.setItemDisplayTransform(ItemDisplay.ItemDisplayTransform.NONE);
 
-            float height = BEAM_REACH * 2f; // total span, in multiples of the model's 16-unit height
             Transformation transformation = new Transformation(
                     new Vector3f(0f, 0f, 0f),
                     new AxisAngle4f(0f, 0f, 0f, 1f),
-                    new Vector3f(1.0f, height / 16f, 1.0f),
+                    new Vector3f(1.0f, (float) (height / 16.0), 1.0f),
                     new AxisAngle4f(0f, 0f, 0f, 1f)
             );
             display.setTransformation(transformation);
