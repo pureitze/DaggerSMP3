@@ -215,8 +215,8 @@ public class DaggerAbilityListener implements Listener {
     }
 
     private boolean castHealthBoost(Player player) {
-        healthDaggerManager.activateBoost(player, 30_000L);
-        player.sendMessage("§aYou feel your vitality surge! (+5 hearts for 30s)");
+        healthDaggerManager.activateBoost(player);
+        player.sendMessage("§aYour vitality is permanently bolstered! (+5 more hearts while you carry this dagger)");
         return true;
     }
 
