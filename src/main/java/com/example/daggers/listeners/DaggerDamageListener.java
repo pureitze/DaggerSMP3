@@ -96,8 +96,8 @@ public class DaggerDamageListener implements Listener {
     }
 
     // --- Base damage: 1.1x regular/sprint/sweep, 1.3x crit for every dagger except Backstab.
-    //     Fire and Ice get an elevated 1.3x/1.6x while their special condition is active.
-    //     Tier 2 (where applicable): 1.4x regular/sprint/sweep, 1.7x crit.
+    //     Fire and Ice get an elevated 1.2x/1.4x while their special condition is active.
+    //     Tier 2 (where applicable): 1.3x regular/sprint/sweep, 1.5x crit.
 
     private double handleFireDagger(Player player, LivingEntity target, boolean isCrit) {
         target.setFireTicks(Math.max(target.getFireTicks(), 100));
