@@ -38,7 +38,7 @@ import java.util.UUID;
 public class DaggerAbilityListener implements Listener {
 
     private static final String FIRE_DAGGER_PROJECTILE_TAG = "flame_dagger_fireball";
-    private static final double GRAPPLE_RANGE = 32.0;
+    private static final double GRAPPLE_RANGE = 45.0;
     private static final int TIER2_COOLDOWN_SECONDS = 120;
 
     private final JavaPlugin plugin;
@@ -209,7 +209,7 @@ public class DaggerAbilityListener implements Listener {
 
         Location loc = target.getLocation();
         loc.getWorld().strikeLightningEffect(loc); // visual + sound only, no vanilla fire/damage
-        target.setHealth(Math.max(0, target.getHealth() - 4.0)); // 2 hearts, true damage
+        target.setHealth(Math.max(0, target.getHealth() - 3.0)); // 2 hearts, true damage
         player.sendMessage("§eYou call down a lightning strike!");
         return true;
     }
