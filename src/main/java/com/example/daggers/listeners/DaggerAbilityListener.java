@@ -1,5 +1,7 @@
 package com.example.daggers.listeners;
 
+import com.example.daggers.AbilityTrigger;
+import com.example.daggers.AbilityTriggerManager;
 import com.example.daggers.CooldownManager;
 import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
@@ -18,6 +20,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.bukkit.event.player.PlayerSwapHandItemsEvent;
 import org.bukkit.inventory.EquipmentSlot;
@@ -51,6 +54,7 @@ public class DaggerAbilityListener implements Listener {
     private final GroundEffectManager groundEffectManager;
     private final WindAbilityListener windAbilityListener;
     private final HealthDaggerManager healthDaggerManager;
+    private final AbilityTriggerManager abilityTriggerManager;
 
     private final Set<UUID> pendingSoulTier2 = new HashSet<>();
     private final Map<UUID, Map<DaggerType, Long>> tier2CooldownEnd = new HashMap<>();
@@ -59,7 +63,7 @@ public class DaggerAbilityListener implements Listener {
                                   Set<UUID> pendingSoulCurse, Set<UUID> pendingDarknessCurse,
                                   DarknessInvisManager darknessInvisManager, Tier2BuffManager tier2BuffManager,
                                   GroundEffectManager groundEffectManager, WindAbilityListener windAbilityListener,
-                                  HealthDaggerManager healthDaggerManager) {
+                                  HealthDaggerManager healthDaggerManager, AbilityTriggerManager abilityTriggerManager) {
         this.plugin = plugin;
         this.cooldowns = cooldowns;
         this.freezeManager = freezeManager;
@@ -70,21 +74,68 @@ public class DaggerAbilityListener implements Listener {
         this.groundEffectManager = groundEffectManager;
         this.windAbilityListener = windAbilityListener;
         this.healthDaggerManager = healthDaggerManager;
+        this.abilityTriggerManager = abilityTriggerManager;
     }
+
+    // ---------------- Generic trigger dispatch ----------------
+    // Each of the four physical actions Bukkit can detect funnels through
+    // here, checking whether it matches the player's personally-configured
+    // Tier 1 or Tier 2 trigger (set via /dagger set_ability).
 
     @EventHandler
     public void onRightClick(PlayerInteractEvent event) {
         if (event.getAction() != Action.RIGHT_CLICK_AIR && event.getAction() != Action.RIGHT_CLICK_BLOCK) return;
         if (event.getHand() != EquipmentSlot.HAND) return;
 
-        Player player = event.getPlayer();
+        boolean handled = tryTrigger(event.getPlayer(), AbilityTrigger.InputAction.RIGHT_CLICK, event.getPlayer().isSneaking());
+        if (handled) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onLeftClick(PlayerInteractEvent event) {
+        if (event.getAction() != Action.LEFT_CLICK_AIR && event.getAction() != Action.LEFT_CLICK_BLOCK) return;
+        if (event.getHand() != EquipmentSlot.HAND) return;
+
+        boolean handled = tryTrigger(event.getPlayer(), AbilityTrigger.InputAction.LEFT_CLICK, event.getPlayer().isSneaking());
+        if (handled) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onSwapHands(PlayerSwapHandItemsEvent event) {
+        boolean handled = tryTrigger(event.getPlayer(), AbilityTrigger.InputAction.SWAP_HANDS, event.getPlayer().isSneaking());
+        if (handled) event.setCancelled(true);
+    }
+
+    @EventHandler
+    public void onDropItem(PlayerDropItemEvent event) {
+        boolean handled = tryTrigger(event.getPlayer(), AbilityTrigger.InputAction.DROP, event.getPlayer().isSneaking());
+        if (handled) event.setCancelled(true);
+    }
+
+    /** Returns true if this action matched (and therefore consumed/handled) one of the player's configured triggers. */
+    private boolean tryTrigger(Player player, AbilityTrigger.InputAction action, boolean sneaking) {
         ItemStack item = player.getInventory().getItemInMainHand();
         DaggerType type = DaggerItem.getType(item);
-        if (type == null) return;
-        if (!player.isSneaking()) return;
+        if (type == null) return false;
 
-        event.setCancelled(true);
+        AbilityTrigger tier1Trigger = abilityTriggerManager.getTier1Trigger(player);
+        if (tier1Trigger.matches(action, sneaking)) {
+            attemptTier1(player, type);
+            return true;
+        }
 
+        AbilityTrigger tier2Trigger = abilityTriggerManager.getTier2Trigger(player);
+        if (tier2Trigger.matches(action, sneaking) && DaggerItem.getTier(item) >= 2) {
+            attemptTier2(player, type);
+            return true;
+        }
+
+        return false;
+    }
+
+    // ---------------- Tier 1 ----------------
+
+    private void attemptTier1(Player player, DaggerType type) {
         if (cooldowns.isOnCooldown(player.getUniqueId(), type)) {
             long remaining = cooldowns.getRemainingSeconds(player.getUniqueId(), type);
             player.sendMessage(type.getDisplayName() + " is on cooldown for " + remaining + "s.");
@@ -242,18 +293,9 @@ public class DaggerAbilityListener implements Listener {
         }
     }
 
-    @EventHandler
-    public void onTier2Ability(PlayerSwapHandItemsEvent event) {
-        Player player = event.getPlayer();
-        if (!player.isSneaking()) return;
+    // ---------------- Tier 2 ----------------
 
-        ItemStack item = player.getInventory().getItemInMainHand();
-        DaggerType type = DaggerItem.getType(item);
-        if (type == null) return;
-        if (DaggerItem.getTier(item) < 2) return;
-
-        event.setCancelled(true);
-
+    private void attemptTier2(Player player, DaggerType type) {
         if (isOnTier2Cooldown(player, type)) {
             long remaining = getTier2RemainingSeconds(player, type);
             player.sendMessage(type.getDisplayName() + " tier 2 ability is on cooldown for " + remaining + "s.");
