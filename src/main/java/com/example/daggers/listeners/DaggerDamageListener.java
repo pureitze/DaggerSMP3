@@ -95,9 +95,9 @@ public class DaggerDamageListener implements Listener {
         }
     }
 
-    // --- Base damage: 1.1x regular/sprint/sweep, 1.3x crit for every dagger except Backstab.
-    //     Fire and Ice get an elevated 1.2x/1.4x while their special condition is active.
-    //     Tier 2 (where applicable): 1.3x regular/sprint/sweep, 1.5x crit.
+    // --- Base damage: 1.1x sprint/sweep/regular, 1.3x crit for every dagger except Backstab.
+    //     Fire/Ice/Water get an elevated 1.2x/1.4x while their special condition is active.
+    //     Tier 2 (where applicable): 1.3x sprint/sweep/regular, 1.5x crit.
 
     private double handleFireDagger(Player player, LivingEntity target, boolean isCrit) {
         target.setFireTicks(Math.max(target.getFireTicks(), 100));
@@ -158,15 +158,13 @@ public class DaggerDamageListener implements Listener {
         return isCrit ? 1.3 : 1.1;
     }
 
-    // Backstab is intentionally untouched by this rework.
+    // Backstab is handled entirely separately from the base/tier2 pattern above.
     private double handleBackstabDagger(Player player, LivingEntity target, boolean isCrit, boolean isSweep, boolean isSprint) {
         if (isBackstab(player, target)) {
             target.getWorld().playSound(target.getLocation(), org.bukkit.Sound.ENTITY_PLAYER_ATTACK_CRIT, 1f, 0.6f);
-            return isCrit ? 1.7 : 1.5;
+            return isCrit ? 1.6 : 1.4;
         }
-        if (isCrit) return 1.4;
-        if (isSweep || isSprint) return 1.2;
-        return 1.2;
+        return isCrit ? 1.4 : 1.2;
     }
 
     private double handleWindDagger(Player player, boolean isCrit) {
