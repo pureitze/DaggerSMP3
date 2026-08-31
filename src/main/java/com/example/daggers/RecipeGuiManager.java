@@ -15,14 +15,16 @@ import java.util.Map;
 
 public class RecipeGuiManager {
 
-    public static final int RESULT_SLOT = 4;
+    public static final int RESULT_SLOT = 13;
     public static final int[] INGREDIENT_SLOTS;
-    public static final int SAVE_SLOT = 22;
-    public static final int BACK_SLOT_ADMIN = 18;
+    public static final int SAVE_SLOT = 16;
+    public static final int BACK_SLOT_ADMIN = 25;
     public static final int BACK_SLOT_VIEW = 22;
 
     static {
-        INGREDIENT_SLOTS = new int[]{10, 12, 14, 16};
+        // A real contiguous 3x3 block (left side of the 27-slot inventory),
+        // matching an actual crafting table's grid instead of scattered slots.
+        INGREDIENT_SLOTS = new int[]{0, 1, 2, 9, 10, 11, 18, 19, 20};
     }
 
     private final JavaPlugin plugin;
