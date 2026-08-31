@@ -5,10 +5,12 @@ import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.InventoryType;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.plugin.java.JavaPlugin;
 
+import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -29,10 +31,12 @@ public class RecipeGuiManager {
 
     private final JavaPlugin plugin;
     private final RecipeManager recipeManager;
+    private final CraftLimitManager craftLimitManager;
 
-    public RecipeGuiManager(JavaPlugin plugin, RecipeManager recipeManager) {
+    public RecipeGuiManager(JavaPlugin plugin, RecipeManager recipeManager, CraftLimitManager craftLimitManager) {
         this.plugin = plugin;
         this.recipeManager = recipeManager;
+        this.craftLimitManager = craftLimitManager;
     }
 
     public void openViewMainMenu(Player player) {
@@ -69,6 +73,55 @@ public class RecipeGuiManager {
         inv.setItem(9, UpgraderItem.create());
 
         player.openInventory(inv);
+    }
+
+    /** Admin menu: shows each dagger type's crafting cap (or "Unlimited") and how many have been made. */
+    public void openCraftLimitMenu(Player player) {
+        CraftLimitMenuHolder holder = new CraftLimitMenuHolder();
+        Inventory inv = Bukkit.createInventory(holder, 9, "§8[Admin] Craft Limits");
+        holder.setInventory(inv);
+
+        int slot = 0;
+        for (DaggerType type : DaggerType.values()) {
+            ItemStack icon = DaggerItem.create(type);
+            ItemMeta meta = icon.getItemMeta();
+            Integer limit = craftLimitManager.getLimit(type);
+            int crafted = craftLimitManager.getCraftedCount(type);
+
+            List<String> lore = new ArrayList<>(meta.getLore() != null ? meta.getLore() : List.of());
+            lore.add("");
+            lore.add(limit == null
+                    ? "§7Limit: §aUnlimited §7(" + crafted + " crafted)"
+                    : "§7Limit: §e" + limit + " §7(" + crafted + " crafted)");
+            lore.add("§7Click to change this limit");
+            meta.setLore(lore);
+            icon.setItemMeta(meta);
+
+            inv.setItem(slot, icon);
+            slot++;
+        }
+
+        player.openInventory(inv);
+    }
+
+    /** Opens a virtual anvil so the admin can type a number (or "unlimited") for this dagger's cap. */
+    public void openCraftLimitInput(Player player, DaggerType type) {
+        CraftLimitInputHolder holder = new CraftLimitInputHolder(type);
+        Inventory inv = Bukkit.createInventory(holder, InventoryType.ANVIL, "§8Set limit: " + type.getDisplayName());
+        holder.setInventory(inv);
+
+        Integer currentLimit = craftLimitManager.getLimit(type);
+        ItemStack input = new ItemStack(Material.PAPER);
+        ItemMeta meta = input.getItemMeta();
+        meta.setDisplayName(currentLimit == null ? "unlimited" : String.valueOf(currentLimit));
+        input.setItemMeta(meta);
+
+        inv.setItem(0, input);
+        player.openInventory(inv);
+    }
+
+    public void setCraftLimit(DaggerType type, Integer limit) {
+        craftLimitManager.setLimit(type, limit);
     }
 
     public void openViewRecipe(Player player, DaggerType type) {
@@ -224,6 +277,37 @@ public class RecipeGuiManager {
 
     public static class DaggerGiveMenuHolder implements InventoryHolder {
         private Inventory inventory;
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+    }
+
+    public static class CraftLimitMenuHolder implements InventoryHolder {
+        private Inventory inventory;
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+    }
+
+    public static class CraftLimitInputHolder implements InventoryHolder {
+        public final DaggerType type;
+        private Inventory inventory;
+
+        public CraftLimitInputHolder(DaggerType type) {
+            this.type = type;
+        }
 
         @Override
         public Inventory getInventory() {
