@@ -36,6 +36,7 @@ public class DaggersPlugin extends JavaPlugin {
     private RecipeGuiManager recipeGuiManager;
     private WindAbilityListener windAbilityListener;
     private HealthDaggerManager healthDaggerManager;
+    private CraftLimitManager craftLimitManager;
 
     @Override
     public void onEnable() {
@@ -50,13 +51,15 @@ public class DaggersPlugin extends JavaPlugin {
         groundEffectManager = new GroundEffectManager(this);
         windAbilityListener = new WindAbilityListener(this);
         healthDaggerManager = new HealthDaggerManager(this);
+        craftLimitManager = new CraftLimitManager(this);
 
         recipeManager = new RecipeManager(this);
         recipeManager.registerRecipes();
 
-        recipeGuiManager = new RecipeGuiManager(this, recipeManager);
+        recipeGuiManager = new RecipeGuiManager(this, recipeManager, craftLimitManager);
 
         getServer().getPluginManager().registerEvents(new RecipeGuiListener(recipeGuiManager), this);
+        getServer().getPluginManager().registerEvents(darknessInvisManager, this);
 
         DaggerAbilityListener abilityListener = new DaggerAbilityListener(
                 this, cooldownManager, freezeManager, pendingSoulCurse, pendingDarknessCurse,
@@ -73,7 +76,7 @@ public class DaggersPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(new NoSprintListener(noSprintManager), this);
         getServer().getPluginManager().registerEvents(new UpgraderListener(), this);
         getServer().getPluginManager().registerEvents(windAbilityListener, this);
-        getServer().getPluginManager().registerEvents(new DaggerCraftListener(this), this);
+        getServer().getPluginManager().registerEvents(new DaggerCraftListener(this, craftLimitManager), this);
 
         registerUpgraderRecipe();
 
@@ -118,13 +121,18 @@ public class DaggersPlugin extends JavaPlugin {
             return true;
         }
 
+        if (args.length == 1 && args[0].equalsIgnoreCase("admin")) {
+            recipeGuiManager.openCraftLimitMenu(player);
+            return true;
+        }
+
         if (args.length == 0) {
             recipeGuiManager.openDaggerGiveMenu(player);
             return true;
         }
 
         if (args.length != 1) {
-            player.sendMessage("§cUsage: /dagger [fire|ice|water|soul|darkness|backstab|wind|zeus|health]");
+            player.sendMessage("§cUsage: /dagger [fire|ice|water|soul|darkness|backstab|wind|zeus|health|admin]");
             return true;
         }
 
