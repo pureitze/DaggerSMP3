@@ -209,6 +209,13 @@ public class RecipeGuiManager {
 
         inv.setItem(RESULT_SLOT, DaggerItem.create(type));
 
+        // Mark every grid slot as an empty, editable spot (red) before placing
+        // real ingredients over the top - whatever's left red is still empty.
+        ItemStack emptySlotMarker = namedItem(Material.RED_STAINED_GLASS_PANE, "§cEmpty - place an ingredient here");
+        for (int slot : INGREDIENT_SLOTS) {
+            inv.setItem(slot, emptySlotMarker);
+        }
+
         Map<Material, Integer> ingredients = recipeManager.getIngredients(type);
         int i = 0;
         for (Map.Entry<Material, Integer> entry : ingredients.entrySet()) {
@@ -229,6 +236,7 @@ public class RecipeGuiManager {
         for (int slot : INGREDIENT_SLOTS) {
             ItemStack item = inv.getItem(slot);
             if (item == null || item.getType() == Material.AIR) continue;
+            if (isEmptySlotMarker(item)) continue;
             ingredients.put(item.getType(), item.getAmount());
         }
 
@@ -245,6 +253,14 @@ public class RecipeGuiManager {
 
         recipeManager.updateRecipe(type, ingredients);
         player.sendMessage("§a" + type.getDisplayName() + " recipe updated!");
+    }
+
+    /** True if this is our own red-glass "empty" placeholder, not a real ingredient a player placed there. */
+    private boolean isEmptySlotMarker(ItemStack item) {
+        if (item.getType() != Material.RED_STAINED_GLASS_PANE) return false;
+        ItemMeta meta = item.getItemMeta();
+        return meta != null && meta.hasDisplayName()
+                && meta.getDisplayName().equals("§cEmpty - place an ingredient here");
     }
 
     private void fillGlass(Inventory inv, int size) {
