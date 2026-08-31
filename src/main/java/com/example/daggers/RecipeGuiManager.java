@@ -53,6 +53,24 @@ public class RecipeGuiManager {
         player.openInventory(inv);
     }
 
+    /** Admin convenience menu: click any dagger or the Upgrader to receive one in your inventory. */
+    public void openDaggerGiveMenu(Player player) {
+        DaggerGiveMenuHolder holder = new DaggerGiveMenuHolder();
+        Inventory inv = Bukkit.createInventory(holder, 18, "§8Get a Dagger");
+        holder.setInventory(inv);
+        fillGlass(inv, 18);
+
+        int slot = 0;
+        for (DaggerType type : DaggerType.values()) {
+            inv.setItem(slot, DaggerItem.create(type));
+            slot++;
+        }
+
+        inv.setItem(9, UpgraderItem.create());
+
+        player.openInventory(inv);
+    }
+
     public void openViewRecipe(Player player, DaggerType type) {
         ViewRecipeHolder holder = new ViewRecipeHolder(type);
         Inventory inv = Bukkit.createInventory(holder, 27, "§8Recipe: " + type.getDisplayName());
@@ -192,6 +210,19 @@ public class RecipeGuiManager {
     }
 
     public static class ViewMainMenuHolder implements InventoryHolder {
+        private Inventory inventory;
+
+        @Override
+        public Inventory getInventory() {
+            return inventory;
+        }
+
+        public void setInventory(Inventory inventory) {
+            this.inventory = inventory;
+        }
+    }
+
+    public static class DaggerGiveMenuHolder implements InventoryHolder {
         private Inventory inventory;
 
         @Override
