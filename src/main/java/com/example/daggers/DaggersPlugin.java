@@ -118,8 +118,13 @@ public class DaggersPlugin extends JavaPlugin {
             return true;
         }
 
+        if (args.length == 0) {
+            recipeGuiManager.openDaggerGiveMenu(player);
+            return true;
+        }
+
         if (args.length != 1) {
-            player.sendMessage("§cUsage: /dagger <fire|ice|water|soul|darkness|backstab|wind|zeus|health>");
+            player.sendMessage("§cUsage: /dagger [fire|ice|water|soul|darkness|backstab|wind|zeus|health]");
             return true;
         }
 
