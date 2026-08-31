@@ -90,7 +90,7 @@ public class DaggerDamageListener implements Listener {
         }
 
         if (abilityListener.consumeSoulTier2(player.getUniqueId())) {
-            target.setHealth(Math.max(0, target.getHealth() - 6.0));
+            target.setHealth(Math.max(0, target.getHealth() - 4.0));
             target.addPotionEffect(new PotionEffect(PotionEffectType.WITHER, 100, 0));
         }
     }
