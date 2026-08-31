@@ -37,6 +37,7 @@ public class DaggersPlugin extends JavaPlugin {
     private WindAbilityListener windAbilityListener;
     private HealthDaggerManager healthDaggerManager;
     private CraftLimitManager craftLimitManager;
+    private AbilityTriggerManager abilityTriggerManager;
 
     @Override
     public void onEnable() {
@@ -52,6 +53,7 @@ public class DaggersPlugin extends JavaPlugin {
         windAbilityListener = new WindAbilityListener(this);
         healthDaggerManager = new HealthDaggerManager(this);
         craftLimitManager = new CraftLimitManager(this);
+        abilityTriggerManager = new AbilityTriggerManager(this);
 
         recipeManager = new RecipeManager(this);
         recipeManager.registerRecipes();
@@ -64,7 +66,7 @@ public class DaggersPlugin extends JavaPlugin {
         DaggerAbilityListener abilityListener = new DaggerAbilityListener(
                 this, cooldownManager, freezeManager, pendingSoulCurse, pendingDarknessCurse,
                 darknessInvisManager, tier2BuffManager, groundEffectManager,
-                windAbilityListener, healthDaggerManager);
+                windAbilityListener, healthDaggerManager, abilityTriggerManager);
 
         DaggerDamageListener damageListener = new DaggerDamageListener(
                 this, pendingSoulCurse, pendingDarknessCurse, hitTracker, noSprintManager,
@@ -111,13 +113,18 @@ public class DaggersPlugin extends JavaPlugin {
             return false;
         }
 
-        if (!sender.hasPermission("customdaggers.admin")) {
-            sender.sendMessage("§cYou don't have permission to use this command.");
+        if (!(sender instanceof Player player)) {
+            sender.sendMessage("Only players can run this command.");
             return true;
         }
 
-        if (!(sender instanceof Player player)) {
-            sender.sendMessage("Only players can run this command.");
+        // set_ability is a personal preference, available to every player - no admin permission needed.
+        if (args.length >= 1 && args[0].equalsIgnoreCase("set_ability")) {
+            return handleSetAbilityCommand(player, args);
+        }
+
+        if (!sender.hasPermission("customdaggers.admin")) {
+            sender.sendMessage("§cYou don't have permission to use this command.");
             return true;
         }
 
@@ -147,6 +154,46 @@ public class DaggersPlugin extends JavaPlugin {
         ItemStack item = DaggerItem.create(type);
         player.getInventory().addItem(item);
         player.sendMessage("You received the " + type.getColor() + type.getDisplayName() + "!");
+        return true;
+    }
+
+    private boolean handleSetAbilityCommand(Player player, String[] args) {
+        if (args.length != 3) {
+            player.sendMessage("§cUsage: /dagger set_ability <1|2> <trigger>");
+            player.sendMessage("§7Triggers: shift_right_click, right_click, shift_left_click, left_click,"
+                    + " shift_swap_hands, swap_hands, shift_drop, drop");
+            return true;
+        }
+
+        int tier;
+        try {
+            tier = Integer.parseInt(args[1]);
+        } catch (NumberFormatException e) {
+            player.sendMessage("§cTier must be 1 or 2.");
+            return true;
+        }
+        if (tier != 1 && tier != 2) {
+            player.sendMessage("§cTier must be 1 or 2.");
+            return true;
+        }
+
+        AbilityTrigger trigger = AbilityTrigger.parse(args[2]);
+        if (trigger == null) {
+            player.sendMessage("§cUnrecognized trigger. Try: shift_right_click, right_click, shift_left_click,"
+                    + " left_click, shift_swap_hands, swap_hands, shift_drop, drop");
+            return true;
+        }
+
+        boolean success = (tier == 1)
+                ? abilityTriggerManager.setTier1Trigger(player, trigger)
+                : abilityTriggerManager.setTier2Trigger(player, trigger);
+
+        if (!success) {
+            player.sendMessage("§cThat trigger is already used by your other ability tier. Choose a different one.");
+            return true;
+        }
+
+        player.sendMessage("§aTier " + tier + " ability trigger set to: " + trigger.getDisplayName());
         return true;
     }
 
