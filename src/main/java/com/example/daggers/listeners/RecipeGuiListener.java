@@ -10,6 +10,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
+import org.bukkit.inventory.AnvilInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
@@ -64,6 +65,59 @@ public class RecipeGuiListener implements Listener {
                 player.sendMessage("§eYour inventory was full, so it was dropped at your feet.");
             } else {
                 player.sendMessage("§aGiven!");
+            }
+            return;
+        }
+
+        if (holder instanceof RecipeGuiManager.CraftLimitMenuHolder) {
+            event.setCancelled(true);
+            int rawSlot = event.getRawSlot();
+            DaggerType[] types = DaggerType.values();
+            if (rawSlot >= 0 && rawSlot < types.length) {
+                guiManager.openCraftLimitInput(player, types[rawSlot]);
+            }
+            return;
+        }
+
+        if (holder instanceof RecipeGuiManager.CraftLimitInputHolder) {
+            RecipeGuiManager.CraftLimitInputHolder inputHolder = (RecipeGuiManager.CraftLimitInputHolder) holder;
+            int rawSlot = event.getRawSlot();
+
+            // Anvil layout: 0 = input slot, 1 = (unused second slot), 2 = result slot
+            if (rawSlot == 2) {
+                event.setCancelled(true);
+                AnvilInventory anvil = (AnvilInventory) event.getInventory();
+                String typed = anvil.getRenameText();
+                if (typed == null || typed.isBlank()) {
+                    ItemStack current = anvil.getItem(0);
+                    typed = (current != null && current.hasItemMeta() && current.getItemMeta().hasDisplayName())
+                            ? current.getItemMeta().getDisplayName()
+                            : "";
+                }
+
+                if (typed.equalsIgnoreCase("unlimited")) {
+                    guiManager.setCraftLimit(inputHolder.type, null);
+                    player.sendMessage("§a" + inputHolder.type.getDisplayName() + " is now unlimited.");
+                } else {
+                    try {
+                        int value = Integer.parseInt(typed.trim());
+                        if (value < 0) throw new NumberFormatException();
+                        guiManager.setCraftLimit(inputHolder.type, value);
+                        player.sendMessage("§a" + inputHolder.type.getDisplayName() + " limit set to " + value + ".");
+                    } catch (NumberFormatException e) {
+                        player.sendMessage("§cType a whole number (or \"unlimited\") before clicking the result.");
+                        return;
+                    }
+                }
+
+                player.closeInventory();
+                guiManager.openCraftLimitMenu(player);
+                return;
+            }
+
+            // Let normal anvil renaming happen in the input slot itself.
+            if (rawSlot != 0) {
+                event.setCancelled(true);
             }
             return;
         }
@@ -130,6 +184,7 @@ public class RecipeGuiListener implements Listener {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof RecipeGuiManager.ViewMainMenuHolder
                 || holder instanceof RecipeGuiManager.DaggerGiveMenuHolder
+                || holder instanceof RecipeGuiManager.CraftLimitMenuHolder
                 || holder instanceof RecipeGuiManager.ViewRecipeHolder
                 || holder instanceof RecipeGuiManager.UpgraderRecipeHolder) {
             event.setCancelled(true);
