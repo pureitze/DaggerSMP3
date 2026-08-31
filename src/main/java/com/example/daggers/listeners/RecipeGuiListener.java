@@ -1,7 +1,9 @@
 package com.example.daggers.listeners;
 
+import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
 import com.example.daggers.RecipeGuiManager;
+import com.example.daggers.UpgraderItem;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
@@ -10,6 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.InventoryHolder;
+import org.bukkit.inventory.ItemStack;
 
 public class RecipeGuiListener implements Listener {
 
@@ -38,6 +41,29 @@ public class RecipeGuiListener implements Listener {
             DaggerType[] types = DaggerType.values();
             if (rawSlot >= 0 && rawSlot < types.length) {
                 guiManager.openViewRecipe(player, types[rawSlot]);
+            }
+            return;
+        }
+
+        if (holder instanceof RecipeGuiManager.DaggerGiveMenuHolder) {
+            event.setCancelled(true);
+            int rawSlot = event.getRawSlot();
+
+            ItemStack toGive;
+            if (rawSlot == 9) {
+                toGive = UpgraderItem.create();
+            } else {
+                DaggerType[] types = DaggerType.values();
+                if (rawSlot < 0 || rawSlot >= types.length) return;
+                toGive = DaggerItem.create(types[rawSlot]);
+            }
+
+            var leftover = player.getInventory().addItem(toGive);
+            if (!leftover.isEmpty()) {
+                player.getWorld().dropItem(player.getLocation(), toGive);
+                player.sendMessage("§eYour inventory was full, so it was dropped at your feet.");
+            } else {
+                player.sendMessage("§aGiven!");
             }
             return;
         }
@@ -103,6 +129,7 @@ public class RecipeGuiListener implements Listener {
     public void onDrag(InventoryDragEvent event) {
         InventoryHolder holder = event.getInventory().getHolder();
         if (holder instanceof RecipeGuiManager.ViewMainMenuHolder
+                || holder instanceof RecipeGuiManager.DaggerGiveMenuHolder
                 || holder instanceof RecipeGuiManager.ViewRecipeHolder
                 || holder instanceof RecipeGuiManager.UpgraderRecipeHolder) {
             event.setCancelled(true);
