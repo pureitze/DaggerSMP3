@@ -44,7 +44,7 @@ public class RecipeGuiListener implements Listener {
 
         if (holder instanceof RecipeGuiManager.ViewRecipeHolder) {
             event.setCancelled(true);
-            if (event.getRawSlot() == 22) {
+            if (event.getRawSlot() == RecipeGuiManager.BACK_SLOT_VIEW) {
                 guiManager.openViewMainMenu(player);
             }
             return;
@@ -52,7 +52,7 @@ public class RecipeGuiListener implements Listener {
 
         if (holder instanceof RecipeGuiManager.UpgraderRecipeHolder) {
             event.setCancelled(true);
-            if (event.getRawSlot() == 22) {
+            if (event.getRawSlot() == RecipeGuiManager.BACK_SLOT_VIEW) {
                 guiManager.openViewMainMenu(player);
             }
             return;
@@ -73,14 +73,14 @@ public class RecipeGuiListener implements Listener {
             int rawSlot = event.getRawSlot();
             Inventory topInventory = event.getView().getTopInventory();
 
-            if (rawSlot == 22) {
+            if (rawSlot == RecipeGuiManager.SAVE_SLOT) {
                 event.setCancelled(true);
                 guiManager.handleSave(player, topInventory, editorHolder.type);
                 guiManager.openAdminEditor(player, editorHolder.type);
                 return;
             }
 
-            if (rawSlot == 18) {
+            if (rawSlot == RecipeGuiManager.BACK_SLOT_ADMIN) {
                 event.setCancelled(true);
                 guiManager.openAdminMainMenu(player);
                 return;
@@ -88,7 +88,7 @@ public class RecipeGuiListener implements Listener {
 
             for (int slot : RecipeGuiManager.INGREDIENT_SLOTS) {
                 if (rawSlot == slot) {
-                    // Ingredient slots are editable — let the click through.
+                    // Ingredient slots are editable - let the click through.
                     return;
                 }
             }
