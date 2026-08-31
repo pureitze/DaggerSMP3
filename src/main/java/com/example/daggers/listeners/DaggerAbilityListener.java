@@ -38,7 +38,7 @@ import java.util.UUID;
 public class DaggerAbilityListener implements Listener {
 
     private static final String FIRE_DAGGER_PROJECTILE_TAG = "flame_dagger_fireball";
-    private static final double GRAPPLE_RANGE = 45.0;
+    private static final double GRAPPLE_RANGE = 32.0;
     private static final int TIER2_COOLDOWN_SECONDS = 120;
 
     private final JavaPlugin plugin;
@@ -209,14 +209,14 @@ public class DaggerAbilityListener implements Listener {
 
         Location loc = target.getLocation();
         loc.getWorld().strikeLightningEffect(loc); // visual + sound only, no vanilla fire/damage
-        target.setHealth(Math.max(0, target.getHealth() - 3.0)); // 2 hearts, true damage
+        target.setHealth(Math.max(0, target.getHealth() - 3.0)); // 1.5 hearts, true damage
         player.sendMessage("§eYou call down a lightning strike!");
         return true;
     }
 
     private boolean castHealthBoost(Player player) {
         healthDaggerManager.activateBoost(player);
-        player.sendMessage("§aYour vitality is permanently bolstered! (+5 more hearts while you carry this dagger)");
+        player.sendMessage("§aYou feel your vitality surge! (+5 hearts for 30s)");
         return true;
     }
 
@@ -331,7 +331,7 @@ public class DaggerAbilityListener implements Listener {
 
         for (Entity nearby : center.getWorld().getNearbyEntities(center, 4, 4, 4)) {
             if (nearby instanceof Player p && !p.equals(player)) {
-                p.setHealth(Math.max(0, p.getHealth() - 8.0)); // 4 hearts, true damage
+                p.setHealth(Math.max(0, p.getHealth() - 6.0)); // 3 hearts total, true damage
             }
         }
         player.sendMessage("§e§lYou summon a lightning storm!");
