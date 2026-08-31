@@ -1,5 +1,6 @@
 package com.example.daggers.listeners;
 
+import com.example.daggers.CraftLimitManager;
 import com.example.daggers.DaggerItem;
 import com.example.daggers.DaggerType;
 import org.bukkit.Bukkit;
@@ -42,20 +43,27 @@ import java.util.concurrent.ConcurrentHashMap;
  * and 250 blocks down, and shows a Wither-style boss bar with the dagger's name
  * and coordinates. When the timer ends, the beam disappears, the table becomes
  * breakable again, and the dagger drops on top of it.
+ *
+ * Also enforces an optional per-type crafting cap (set via /dagger admin) -
+ * once a type hits its configured limit, further crafts of that type are
+ * blocked entirely.
  */
 public class DaggerCraftListener implements Listener {
 
     private static final long FIRST_DAGGER_DELAY_TICKS = 8 * 60 * 20L; // 8 minutes
     private static final float BEAM_REACH = 250f; // blocks up AND down
+    private static final double BEAM_SEGMENT_HEIGHT = 24.0; // blocks per segment - modest stretch, avoids culling issues
 
     private final JavaPlugin plugin;
+    private final CraftLimitManager craftLimitManager;
     private final Set<DaggerType> firstCraftedTypes;
     private final ConcurrentHashMap<DaggerType, BossBar> activeBars = new ConcurrentHashMap<>();
     // block locations currently protected + beaming, and which dagger type each belongs to
     private final ConcurrentHashMap<Location, DaggerType> protectedAltars = new ConcurrentHashMap<>();
 
-    public DaggerCraftListener(JavaPlugin plugin) {
+    public DaggerCraftListener(JavaPlugin plugin, CraftLimitManager craftLimitManager) {
         this.plugin = plugin;
+        this.craftLimitManager = craftLimitManager;
         this.firstCraftedTypes = EnumSet.noneOf(DaggerType.class);
 
         List<String> saved = plugin.getConfig().getStringList("firstCraftedDaggerTypes");
@@ -76,9 +84,18 @@ public class DaggerCraftListener implements Listener {
         DaggerType type = DaggerItem.getType(result);
         if (type == null) return;
 
+        if (!craftLimitManager.canCraft(type)) {
+            event.setCancelled(true);
+            Integer limit = craftLimitManager.getLimit(type);
+            player.sendMessage("§c" + type.getDisplayName() + " has reached its crafting limit ("
+                    + craftLimitManager.getCraftedCount(type) + "/" + limit + ").");
+            return;
+        }
+
         if (!firstCraftedTypes.contains(type)) {
             firstCraftedTypes.add(type);
             saveClaimedTypes();
+            craftLimitManager.incrementCraftedCount(type);
 
             Location tableLoc = (event.getInventory() instanceof CraftingInventory ci && ci.getLocation() != null)
                     ? ci.getLocation().getBlock().getLocation()
@@ -88,6 +105,8 @@ public class DaggerCraftListener implements Listener {
             Bukkit.getScheduler().runTask(plugin, () -> handleFirstOfType(player, type, tableLoc));
             return;
         }
+
+        craftLimitManager.incrementCraftedCount(type);
 
         Location loc = player.getLocation();
         String coords = formatCoords(loc);
@@ -189,14 +208,12 @@ public class DaggerCraftListener implements Listener {
     }
 
     /**
-     * Spawns a single stretched ItemDisplay entity that reads as a tall glowing
+     * Spawns a chain of stretched ItemDisplay segments that read as a tall glowing
      * beam reaching BEAM_REACH blocks up and BEAM_REACH blocks down from the
      * table. This is a real entity, not a particle effect and not a vanilla
      * beacon - so it isn't hidden by particle settings and isn't limited to
      * pointing only upward or needing sky access / a mineral pyramid.
      */
-    private static final double BEAM_SEGMENT_HEIGHT = 24.0; // blocks per segment - modest stretch, avoids culling issues
-
     private List<ItemDisplay> spawnBeam(Location tableLoc, DaggerType type) {
         var world = tableLoc.getWorld();
         double minY = world.getMinHeight();
@@ -205,7 +222,6 @@ public class DaggerCraftListener implements Listener {
         // Reach as far as BEAM_REACH in each direction, but never past what the world actually has.
         double bottom = Math.max(minY, tableLoc.getY() - BEAM_REACH);
         double top = Math.min(maxY, tableLoc.getY() + 1.0 + BEAM_REACH);
-        double totalHeight = top - bottom;
 
         List<ItemDisplay> segments = new java.util.ArrayList<>();
         ItemStack beamItem = createBeamItem(type);
