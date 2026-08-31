@@ -65,10 +65,10 @@ public class DaggerItem {
             case FIRE -> List.of(
                     "§7§oSets enemies ablaze on hit.",
                     "§7§o1.1x dmg (1.3x crit) normally.",
-                    "§7§o1.3x dmg (1.6x crit) while YOU are on fire.");
+                    "§7§o1.2x dmg (1.4x crit) while YOU are on fire.");
             case ICE -> List.of(
                     "§7§o1.1x dmg (1.3x crit) normally.",
-                    "§7§o1.3x dmg (1.6x crit) while standing on ice.");
+                    "§7§o1.2x dmg (1.4x crit) while standing on ice.");
             case WATER -> List.of("§7§o1.1x dmg (1.3x crit) on every hit.");
             case SOUL -> List.of(
                     "§7§o1.1x dmg (1.3x crit) on every hit.",
@@ -101,7 +101,7 @@ public class DaggerItem {
             case DARKNESS -> List.of("§7Invisible 8s + curse your next target §8(75s)");
             case BACKSTAB -> List.of("§7Grappling hook, up to 32 blocks §8(60s)");
             case WIND -> List.of("§7Launch 7 blocks up, slam on landing", "§7for 3 hearts AOE (8 blocks) §8(60s)");
-            case ZEUS -> List.of("§7Lightning strike, 2 hearts §8(60s)");
+            case ZEUS -> List.of("§7Lightning strike, 1.5 hearts §8(60s)");
             case HEALTH -> List.of("§7Gain 20 hearts total for 30s §8(60s)");
         });
 
@@ -109,15 +109,15 @@ public class DaggerItem {
             lore.add("");
             lore.add("§d§lTier II Ability §8[Shift + Swap-hands]");
             lore.addAll(switch (type) {
-                case FIRE -> List.of("§78-block fire field, 16s.", "§71.4x dmg (sprint/sweep/hit), 1.7x crit, 8s §8(120s)");
-                case ICE -> List.of("§78-block ice field, 16s.", "§71.4x dmg (sprint/sweep/hit), 1.7x crit, 8s §8(120s)");
-                case WATER -> List.of("§7Dolphin's Grace, 30s.", "§71.4x dmg (sprint/sweep/hit), 1.7x crit, 8s §8(120s)");
-                case SOUL -> List.of("§7Next hit: 3 hearts + Wither 5s §8(120s)");
-                case DARKNESS -> List.of("§7Invisible 8s.", "§71.4x dmg (sprint/sweep/hit), 1.7x crit, 8s §8(120s)");
+                case FIRE -> List.of("§78-block fire field, 16s.", "§71.3x dmg (sprint/sweep/hit), 1.5x crit, 8s §8(120s)");
+                case ICE -> List.of("§78-block ice field, 16s.", "§71.3x dmg (sprint/sweep/hit), 1.5x crit, 8s §8(120s)");
+                case WATER -> List.of("§7Dolphin's Grace, 30s.", "§71.3x dmg (sprint/sweep/hit), 1.5x crit, 8s §8(120s)");
+                case SOUL -> List.of("§7Next hit: 2 hearts + Wither 5s §8(120s)");
+                case DARKNESS -> List.of("§7Invisible 8s.", "§71.3x dmg (sprint/sweep/hit), 1.5x crit, 8s §8(120s)");
                 case BACKSTAB -> List.of("§7Resistance II + Speed III, 8s §8(120s)");
-                case WIND -> List.of("§71.4x dmg (sprint/sweep/hit), 1.7x crit, 20s §8(120s)", "§7Double-tap sneak to dash 10 blocks (tier 2 passive)");
-                case ZEUS -> List.of("§7Lightning storm, 4 hearts §8(120s)");
-                case HEALTH -> List.of("§71.4x dmg (sprint/sweep/hit), 1.7x crit, 5s §8(120s)");
+                case WIND -> List.of("§71.3x dmg (sprint/sweep/hit), 1.5x crit, 20s §8(120s)", "§7Double-tap sneak to dash 10 blocks (tier 2 passive)");
+                case ZEUS -> List.of("§7Lightning storm, 3 hearts §8(120s)");
+                case HEALTH -> List.of("§71.3x dmg (sprint/sweep/hit), 1.5x crit, 5s §8(120s)");
             });
         }
 
