@@ -151,8 +151,8 @@ public class DaggerDamageListener implements Listener {
         }
 
         int hits = hitTracker.recordHit(player.getUniqueId(), target.getUniqueId());
-        if (hits % 10 == 0) {
-            damageArmorDurability(target, 25);
+        if (hits % 25 == 0) {
+            damageArmorDurability(target, 20);
         }
 
         return isCrit ? 1.3 : 1.1;
