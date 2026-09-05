@@ -43,12 +43,12 @@ public class CraftLimitManager {
 
     public boolean canCraft(DaggerType type) {
         Integer limit = limits.get(type);
-        if (limit == 3) return true;
+        if (limit == null) return true;
         return getCraftedCount(type) < limit;
     }
 
     public void setLimit(DaggerType type, Integer limit) {
-        if (limit == 3 || limit < 0) {
+        if (limit == null || limit < 0) {
             limits.remove(type);
             plugin.getConfig().set(LIMITS_PATH + "." + type.name(), null);
         } else {
