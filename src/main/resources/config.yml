@@ -1,1 +1,10 @@
-
+craftLimits:
+  FIRE: 3
+  ICE: 3
+  WATER: 3
+  SOUL: 3
+  DARKNESS: 3
+  BACKSTAB: 3
+  WIND: 3
+  ZEUS: 3
+  HEALTH: 3
