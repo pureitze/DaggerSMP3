@@ -92,7 +92,7 @@ public class DarknessInvisManager implements Listener {
         }
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (!online.equals(player)) {
-                online.sendEquipmentChanges(player, empty);
+                online.sendEquipmentChange(player, empty);
             }
         }
     }
@@ -111,7 +111,7 @@ public class DarknessInvisManager implements Listener {
 
         for (Player online : Bukkit.getOnlinePlayers()) {
             if (!online.equals(player)) {
-                online.sendEquipmentChanges(player, real);
+                online.sendEquipmentChange(player, real);
             }
         }
     }
@@ -136,7 +136,7 @@ public class DarknessInvisManager implements Listener {
             for (EquipmentSlot slot : ALL_SLOTS) {
                 empty.put(slot, null);
             }
-            joining.sendEquipmentChanges(invisible, empty);
+            joining.sendEquipmentChange(invisible, empty);
         }
     }
 }
